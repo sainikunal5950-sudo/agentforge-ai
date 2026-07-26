@@ -1,14 +1,24 @@
-import { Router } from "express"
-import { registerUser, verifyUser } from "../controllers/authcontroller";
-
-
+import { Router } from "express";
+import {
+    registerUser,
+    verifyUser,
+    loginUser,
+    refreshAccessToken,
+    logoutUser,
+    getMe
+} from "../controllers/authcontroller";
+import { requireAuth } from "../middleware/auth.middleware";
 
 const router = Router();
-// sbse phle jo  bhi  reqst aaygyi voh edr hit kregi bhai 
-router.post(
-    "/register",
-    registerUser
-)
+
+// Public routes
+router.post("/register", registerUser);
 router.post("/verify-code", verifyUser);
+router.post("/login", loginUser);
+router.post("/refresh", refreshAccessToken);
+
+// Protected routes (require authorization middleware)
+router.post("/logout", requireAuth, logoutUser);
+router.get("/me", requireAuth, getMe);
 
 export default router;

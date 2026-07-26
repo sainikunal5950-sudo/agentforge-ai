@@ -1,5 +1,5 @@
 import { Router } from "express"
-import { registerUser } from "../controllers/authcontroller";
+import { registerUser, verifyUser } from "../controllers/authcontroller";
 
 
 
@@ -9,5 +9,6 @@ router.post(
     "/register",
     registerUser
 )
+router.post("/verify-code", verifyUser);
 
 export default router;

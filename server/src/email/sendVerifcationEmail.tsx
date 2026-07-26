@@ -9,11 +9,15 @@ import {
 } from "@react-email/components";
 
 interface VerificationEmailProps {
+
+    email: string,
     name: string;
     verifyCode: string;
 }
 
 export default function VerificationEmail({
+
+    email,
     name,
     verifyCode,
 }: VerificationEmailProps) {

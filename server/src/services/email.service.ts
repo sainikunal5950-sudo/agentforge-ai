@@ -52,6 +52,7 @@ export const sendVerificationEmail = async (
             to: email,
             subject: "Verify your email",
             react: VerificationEmail({
+                email,
                 name,
                 verifyCode,
             }),

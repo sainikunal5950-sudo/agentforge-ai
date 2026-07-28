@@ -9,7 +9,20 @@ import userRouter from "./routes/user.routes";
 const app = express();
 
 // Middlewares
-app.use(cors());
+// ─── CORS Configuration ───────────────────────────────────────────────────────
+// origin: must exactly match the frontend URL — wildcards (*) are forbidden
+//         when credentials (cookies) are involved.
+// credentials: true — instructs Express to set the
+//         "Access-Control-Allow-Credentials: true" header so the browser
+//         forwards HTTP-only cookies on cross-origin requests.
+// Without this, withCredentials: true on the Axios side is silently ignored.
+// ─────────────────────────────────────────────────────────────────────────────
+app.use(
+    cors({
+        origin: process.env.CLIENT_URL || "http://localhost:3000",
+        credentials: true,
+    })
+);
 
 app.use(express.json());
 

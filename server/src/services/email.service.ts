@@ -1,5 +1,5 @@
-import { resend } from "../config/resend";
-import VerificationEmail from "../email/sendVerifcationEmail";
+import { resend } from "../config/resend.js";
+import VerificationEmail from "../email/sendVerifcationEmail.js";
 
 
 /*

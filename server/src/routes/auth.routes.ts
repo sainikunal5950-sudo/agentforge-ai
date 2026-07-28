@@ -6,8 +6,8 @@ import {
     refreshAccessToken,
     logoutUser,
     getMe
-} from "../controllers/authcontroller";
-import { requireAuth } from "../middleware/auth.middleware";
+} from "../controllers/authcontroller.js";
+import { requireAuth } from "../middleware/auth.middleware.js";
 
 const router = Router();
 

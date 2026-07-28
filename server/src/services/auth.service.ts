@@ -1,13 +1,13 @@
 import bcrypt from "bcrypt";
 import jwt from "jsonwebtoken";
-import { User, IUser } from "../models/user.model";
-import { sendVerificationEmail } from "./email.service";
+import { User, IUser } from "../models/user.model.js";
+import { sendVerificationEmail } from "./email.service.js";
 import {
     IRegisterInput,
     ILoginInput,
     IVerifyCodeInput,
     IJwtPayload
-} from "../types/auth.types";
+} from "../types/auth.types.js";
 
 /**
  * Helper to generate a short-lived cryptographically signed access token.

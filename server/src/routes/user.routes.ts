@@ -1,6 +1,6 @@
 import { Router } from "express";
-import { requireAuth } from "../middleware/auth.middleware";
-import { uploadAvatar, handleUploadError } from "../middleware/upload.middleware";
+import { requireAuth } from "../middleware/auth.middleware.js";
+import { uploadAvatar, handleUploadError } from "../middleware/upload.middleware.js";
 import {
     getUserProfile,
     updateUserProfile,
@@ -9,7 +9,7 @@ import {
     deleteUserAccount,
     getUserSettings,
     updateUserSettings,
-} from "../controllers/user.controller";
+} from "../controllers/user.controller.js";
 
 const router = Router();
 

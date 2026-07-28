@@ -5,8 +5,8 @@ import {
     loginUserService,
     refreshAccessTokenService,
     logoutUserService
-} from "../services/auth.service";
-import { IAuthenticatedRequest } from "../types/auth.types";
+} from "../services/auth.service.js";
+import { IAuthenticatedRequest } from "../types/auth.types.js";
 
 // Determine environment to enable HTTPS-only cookies in production
 const isProduction = process.env.NODE_ENV === "production";

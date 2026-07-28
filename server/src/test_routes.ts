@@ -1,7 +1,7 @@
 import "dotenv/config";
 import mongoose from "mongoose";
-import app from "./app";
-import { User } from "./models/user.model";
+import app from "./app.js";
+import { User } from "./models/user.model.js";
 
 const TEST_EMAIL = "route_test_engineer@example.com";
 const TEST_PASSWORD = "Password123#";

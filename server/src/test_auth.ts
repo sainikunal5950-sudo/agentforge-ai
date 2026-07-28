@@ -1,13 +1,13 @@
 import "dotenv/config";
 import mongoose from "mongoose";
-import { User } from "./models/user.model";
+import { User } from "./models/user.model.js";
 import {
     registerUserService,
     verifyUserService,
     loginUserService,
     refreshAccessTokenService,
     logoutUserService
-} from "./services/auth.service";
+} from "./services/auth.service.js";
 
 const TEST_EMAIL = "test_auth_flow_engineer@example.com";
 const TEST_PASSWORD = "Password123#";

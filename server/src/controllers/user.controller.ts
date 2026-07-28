@@ -1,5 +1,5 @@
 import { Response } from "express";
-import { IAuthenticatedRequest } from "../types/auth.types";
+import { IAuthenticatedRequest } from "../types/auth.types.js";
 import {
     getUserProfileService,
     updateUserProfileService,
@@ -8,7 +8,7 @@ import {
     deleteUserAccountService,
     getUserSettingsService,
     updateUserSettingsService,
-} from "../services/user.service";
+} from "../services/user.service.js";
 
 // ─────────────────────────────────────────────────────────────────────────────
 // USER MANAGEMENT CONTROLLER

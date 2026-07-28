@@ -1,7 +1,7 @@
 import bcrypt from "bcrypt";
 import path from "path";
 import fs from "fs";
-import { User, IUser, IUserSettings } from "../models/user.model";
+import { User, IUser, IUserSettings } from "../models/user.model.js";
 
 // ─────────────────────────────────────────────────────────────────────────────
 // USER MANAGEMENT SERVICE

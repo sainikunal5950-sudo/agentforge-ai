@@ -1,5 +1,5 @@
 import { Request } from "express";
-import { IUser } from "../models/user.model";
+import { IUser } from "../models/user.model.js";
 
 /**
  * Interface representing input data for user registration.

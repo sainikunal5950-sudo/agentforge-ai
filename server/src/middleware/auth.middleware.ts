@@ -1,7 +1,7 @@
 import { Response, NextFunction } from "express";
 import jwt from "jsonwebtoken";
-import { User } from "../models/user.model";
-import { IAuthenticatedRequest, IJwtPayload } from "../types/auth.types";
+import { User } from "../models/user.model.js";
+import { IAuthenticatedRequest, IJwtPayload } from "../types/auth.types.js";
 
 /**
  * Middleware to enforce authentication on routes.

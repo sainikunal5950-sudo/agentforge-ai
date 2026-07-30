@@ -1,0 +1,126 @@
+import { Response } from "express";
+import { IAuthenticatedRequest } from "../types/auth.types.js";
+import { ICreateAgentInput, IUpdateAgentInput } from "../types/agent.types.js";
+import {
+    createAgentService,
+    getAgentsService,
+    getAgentByIdService,
+    updateAgentService,
+    deleteAgentService
+} from "../services/agent.service.js";
+
+// ─── The Request-Response Lifecycle in Controllers ─────────────────────────────
+// The Controller acts strictly as the "Traffic Cop" or "Orchestrator" of our application.
+// Its complete lifecycle is:
+// 1. Receive: Intercept the incoming HTTP Request (req) from the Express Router.
+// 2. Extract: Pull out necessary data from req.body (payload), req.params (URL variables), 
+//    and req.user (injected securely by the auth middleware).
+// 3. Delegate: Pass the extracted data as clean arguments into the Service Layer, 
+//    which handles the actual "business logic", authorization rules, and database interactions.
+// 4. Respond: Take the exact result returned by the Service and formulate an HTTP Response (res)
+//    with the correct semantic status code (e.g., 201 Created, 200 OK) and send it as JSON.
+// 5. Catch: If anything fails in the Service Layer (e.g. validation error, not found), 
+//    catch the error and map it to an HTTP error response (e.g., 400 Bad Request).
+//
+// By ensuring NO business logic lives here, we make the codebase modular, testable, and robust.
+
+/**
+ * @function createAgent
+ * @desc Extracts payload from req.body and the authenticated user's ID to create a new agent.
+ * @lifecycle Handles HTTP POST Request -> Extracts Data -> Calls Service -> Returns HTTP 201 (Created)
+ */
+export const createAgent = async (req: IAuthenticatedRequest, res: Response): Promise<void> => {
+    try {
+        const userId = req.user!._id as string;
+        const input: ICreateAgentInput = req.body;
+        
+        // Delegate all heavy lifting to the service layer
+        const newAgent = await createAgentService(userId, input);
+        
+        // Respond with HTTP 201 Created, standard when a new resource is successfully inserted
+        res.status(201).json(newAgent);
+    } catch (error: any) {
+        res.status(400).json({ message: error.message || "Failed to create agent" });
+    }
+};
+
+/**
+ * @function getAgents
+ * @desc Retrieves all agents owned by the currently authenticated user.
+ * @lifecycle Handles HTTP GET Request -> Extracts User ID -> Calls Service -> Returns HTTP 200 (OK)
+ */
+export const getAgents = async (req: IAuthenticatedRequest, res: Response): Promise<void> => {
+    try {
+        const userId = req.user!._id as string;
+        
+        // Delegate fetching logic to service layer
+        const agents = await getAgentsService(userId);
+        
+        // Respond with HTTP 200 OK with the array of agents
+        res.status(200).json(agents);
+    } catch (error: any) {
+        res.status(500).json({ message: error.message || "Failed to retrieve agents" });
+    }
+};
+
+/**
+ * @function getAgentById
+ * @desc Extracts the agent ID from URL parameters to fetch a specific agent.
+ * @lifecycle Handles HTTP GET Request -> Extracts Params -> Calls Service -> Returns HTTP 200 (OK)
+ */
+export const getAgentById = async (req: IAuthenticatedRequest, res: Response): Promise<void> => {
+    try {
+        const userId = req.user!._id as string;
+        const agentId = req.params.id; // Extracted from /api/agents/:id
+        
+        // Delegate fetching logic to service layer
+        const agent = await getAgentByIdService(userId, agentId);
+        
+        // Respond with HTTP 200 OK containing the single agent object
+        res.status(200).json(agent);
+    } catch (error: any) {
+        res.status(404).json({ message: error.message || "Agent not found" });
+    }
+};
+
+/**
+ * @function updateAgent
+ * @desc Extracts agent ID and updated fields from body to modify an existing agent.
+ * @lifecycle Handles HTTP PUT Request -> Extracts Params & Body -> Calls Service -> Returns HTTP 200 (OK)
+ */
+export const updateAgent = async (req: IAuthenticatedRequest, res: Response): Promise<void> => {
+    try {
+        const userId = req.user!._id as string;
+        const agentId = req.params.id;
+        const input: IUpdateAgentInput = req.body;
+        
+        // Delegate update logic to service layer
+        const updatedAgent = await updateAgentService(userId, agentId, input);
+        
+        // Respond with HTTP 200 OK and the newly updated agent state
+        res.status(200).json(updatedAgent);
+    } catch (error: any) {
+        res.status(400).json({ message: error.message || "Failed to update agent" });
+    }
+};
+
+/**
+ * @function deleteAgent
+ * @desc Extracts agent ID from URL parameters and initiates deletion.
+ * @lifecycle Handles HTTP DELETE Request -> Extracts Params -> Calls Service -> Returns HTTP 200 (OK)
+ */
+export const deleteAgent = async (req: IAuthenticatedRequest, res: Response): Promise<void> => {
+    try {
+        const userId = req.user!._id as string;
+        const agentId = req.params.id;
+        
+        // Delegate deletion logic to service layer
+        await deleteAgentService(userId, agentId);
+        
+        // Respond with HTTP 200 OK. 
+        // Note: 204 No Content is also acceptable for DELETEs, but 200 allows us to send a JSON success message.
+        res.status(200).json({ message: "Agent deleted successfully" });
+    } catch (error: any) {
+        res.status(400).json({ message: error.message || "Failed to delete agent" });
+    }
+};

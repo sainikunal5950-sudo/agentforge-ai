@@ -18,6 +18,7 @@ import type { Metadata } from "next";
 import "./globals.css";
 import Sidebar from "@/components/layout/Sidebar";
 import TopBar from "@/components/layout/TopBar";
+import { ToastProvider } from "@/contexts/ToastContext";
 
 export const metadata: Metadata = {
     title: {
@@ -37,57 +38,59 @@ export default function RootLayout({
     return (
         <html lang="en" className="dark">
             <body className="bg-[#0a0a0f] text-white antialiased">
-                {/* ── Fixed Sidebar (260px wide) ─────────────────────────── */}
-                <Sidebar />
+                <ToastProvider>
+                    {/* ── Fixed Sidebar (260px wide) ─────────────────────────── */}
+                    <Sidebar />
 
-                {/* ── Fixed Top Bar ─────────────────────────────────────── */}
-                <TopBar />
+                    {/* ── Fixed Top Bar ─────────────────────────────────────── */}
+                    <TopBar />
 
-                {/* ── Main Content Area ─────────────────────────────────── */}
-                {/*
-                    Using inline styles for the layout-critical parts:
-                    Tailwind utilities (fixed, left-64, flex, justify-center)
-                    can sometimes be overridden or miscalculated at runtime.
-                    Inline styles are browser-native and always win.
-
-                    top: 64px  → height of TopBar (h-16 = 4rem = 64px)
-                    left: 256px → width of Sidebar (w-64 = 16rem = 256px)
-                    right: 0 / bottom: 0 → fills remaining viewport
-                    overflow-y: auto → scrolling happens inside this box
-                */}
-                <main
-                    className="gradient-bg"
-                    style={{
-                        position: "fixed",
-                        top: "64px",
-                        left: "256px",
-                        right: 0,
-                        bottom: 0,
-                        overflowY: "auto",
-                    }}
-                >
+                    {/* ── Main Content Area ─────────────────────────────────── */}
                     {/*
-                        display: flex + justifyContent: center
-                        → horizontally centers the content column
-                        inside the available area (viewport − sidebar)
+                        Using inline styles for the layout-critical parts:
+                        Tailwind utilities (fixed, left-64, flex, justify-center)
+                        can sometimes be overridden or miscalculated at runtime.
+                        Inline styles are browser-native and always win.
+
+                        top: 64px  → height of TopBar (h-16 = 4rem = 64px)
+                        left: 256px → width of Sidebar (w-64 = 16rem = 256px)
+                        right: 0 / bottom: 0 → fills remaining viewport
+                        overflow-y: auto → scrolling happens inside this box
                     */}
-                    <div
+                    <main
+                        className="gradient-bg"
                         style={{
-                            display: "flex",
-                            justifyContent: "center",
-                            padding: "2rem 1.5rem",
-                            minHeight: "100%",
+                            position: "fixed",
+                            top: "64px",
+                            left: "256px",
+                            right: 0,
+                            bottom: 0,
+                            overflowY: "auto",
                         }}
                     >
-                        {/* maxWidth: 768px → readable line-length for forms + JSON */}
+                        {/*
+                            display: flex + justifyContent: center
+                            → horizontally centers the content column
+                            inside the available area (viewport − sidebar)
+                        */}
                         <div
-                            style={{ width: "100%", maxWidth: "768px" }}
-                            className="page-enter"
+                            style={{
+                                display: "flex",
+                                justifyContent: "center",
+                                padding: "2rem 1.5rem",
+                                minHeight: "100%",
+                            }}
                         >
-                            {children}
+                            {/* maxWidth: 768px → readable line-length for forms + JSON */}
+                            <div
+                                style={{ width: "100%", maxWidth: "768px" }}
+                                className="page-enter"
+                            >
+                                {children}
+                            </div>
                         </div>
-                    </div>
-                </main>
+                    </main>
+                </ToastProvider>
             </body>
         </html>
     );

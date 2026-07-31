@@ -31,12 +31,12 @@ import {
  */
 export const createAgent = async (req: IAuthenticatedRequest, res: Response): Promise<void> => {
     try {
-        const userId = req.user!._id as string;
+        const userId = req.user!._id.toString();
         const input: ICreateAgentInput = req.body;
-        
+
         // Delegate all heavy lifting to the service layer
         const newAgent = await createAgentService(userId, input);
-        
+
         // Respond with HTTP 201 Created, standard when a new resource is successfully inserted
         res.status(201).json(newAgent);
     } catch (error: any) {
@@ -51,11 +51,11 @@ export const createAgent = async (req: IAuthenticatedRequest, res: Response): Pr
  */
 export const getAgents = async (req: IAuthenticatedRequest, res: Response): Promise<void> => {
     try {
-        const userId = req.user!._id as string;
-        
+        const userId = req.user!._id.toString();
+
         // Delegate fetching logic to service layer
         const agents = await getAgentsService(userId);
-        
+
         // Respond with HTTP 200 OK with the array of agents
         res.status(200).json(agents);
     } catch (error: any) {
@@ -70,16 +70,17 @@ export const getAgents = async (req: IAuthenticatedRequest, res: Response): Prom
  */
 export const getAgentById = async (req: IAuthenticatedRequest, res: Response): Promise<void> => {
     try {
-        const userId = req.user!._id as string;
-        const agentId = req.params.id; // Extracted from /api/agents/:id
-        
+        const userId = req.user!._id.toString();
+        const agentId = req.params.id.toString(); // Extracted from /api/agents/:id
+
         // Delegate fetching logic to service layer
         const agent = await getAgentByIdService(userId, agentId);
-        
+
         // Respond with HTTP 200 OK containing the single agent object
         res.status(200).json(agent);
     } catch (error: any) {
-        res.status(404).json({ message: error.message || "Agent not found" });
+        const statusCode = error.statusCode || 500;
+        res.status(statusCode).json({ message: error.message || "Failed to retrieve agent" });
     }
 };
 
@@ -90,17 +91,18 @@ export const getAgentById = async (req: IAuthenticatedRequest, res: Response): P
  */
 export const updateAgent = async (req: IAuthenticatedRequest, res: Response): Promise<void> => {
     try {
-        const userId = req.user!._id as string;
-        const agentId = req.params.id;
+        const userId = req.user!._id.toString();
+        const agentId = req.params.id.toString();
         const input: IUpdateAgentInput = req.body;
-        
+
         // Delegate update logic to service layer
         const updatedAgent = await updateAgentService(userId, agentId, input);
-        
+
         // Respond with HTTP 200 OK and the newly updated agent state
         res.status(200).json(updatedAgent);
     } catch (error: any) {
-        res.status(400).json({ message: error.message || "Failed to update agent" });
+        const statusCode = error.statusCode || 400;
+        res.status(statusCode).json({ message: error.message || "Failed to update agent" });
     }
 };
 
@@ -111,16 +113,17 @@ export const updateAgent = async (req: IAuthenticatedRequest, res: Response): Pr
  */
 export const deleteAgent = async (req: IAuthenticatedRequest, res: Response): Promise<void> => {
     try {
-        const userId = req.user!._id as string;
-        const agentId = req.params.id;
-        
+        const userId = req.user!._id.toString();
+        const agentId = req.params.id.toString();
+
         // Delegate deletion logic to service layer
         await deleteAgentService(userId, agentId);
-        
+
         // Respond with HTTP 200 OK. 
         // Note: 204 No Content is also acceptable for DELETEs, but 200 allows us to send a JSON success message.
         res.status(200).json({ message: "Agent deleted successfully" });
     } catch (error: any) {
-        res.status(400).json({ message: error.message || "Failed to delete agent" });
+        const statusCode = error.statusCode || 400;
+        res.status(statusCode).json({ message: error.message || "Failed to delete agent" });
     }
 };

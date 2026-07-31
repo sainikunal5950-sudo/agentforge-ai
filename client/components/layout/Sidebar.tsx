@@ -38,6 +38,10 @@ const USER_ROUTES: NavItem[] = [
     { label: "Settings",             path: "/user/settings", method: "GET"    },
 ];
 
+const AGENT_ROUTES: NavItem[] = [
+    { label: "Agent Dashboard",      path: "/agents",        method: "GET"    },
+];
+
 const METHOD_COLORS: Record<HttpMethod, string> = {
     GET:    "text-emerald-500",
     POST:   "text-blue-500",
@@ -111,6 +115,11 @@ export default function Sidebar() {
 
             {/* ── Navigation ───────────────────────────────────────────────── */}
             <nav className="flex-1 px-3 py-5">
+                <NavGroup
+                    title="Agent Module"
+                    icon={<span className="w-4 h-4 rounded-full border-2 border-current flex items-center justify-center"><span className="w-1.5 h-1.5 bg-current rounded-full" /></span>}
+                    items={AGENT_ROUTES}
+                />
                 <NavGroup
                     title="Auth Module"
                     icon={<ShieldIcon />}

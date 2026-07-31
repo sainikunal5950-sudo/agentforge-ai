@@ -17,7 +17,8 @@ export interface IAgent extends Document {
     // Why it exists: Provides context and purpose for the agent to the user.
     description: string;
 
-    // Note: createdAt and updatedAt are automatically managed by Mongoose via timestamps.
+    createdAt: Date;
+    updatedAt: Date;
     // 
     // Future Extensibility:
     // This model is the core "hub". In the future, it will easily expand to include:

@@ -124,5 +124,4 @@ router.get("/settings", requireAuth, getUserSettings);
  * Response:     { success, message, data: { theme, notifications } }
  */
 router.put("/settings", requireAuth, updateUserSettings);
-
 export default router;

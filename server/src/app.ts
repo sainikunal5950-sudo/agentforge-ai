@@ -5,6 +5,7 @@ import path from "path";
 
 import authRouter from "./routes/auth.routes.js";
 import userRouter from "./routes/user.routes.js";
+import agentRouter from "./routes/agent.routes.js";
 
 const app = express();
 
@@ -45,5 +46,6 @@ app.get("/", (req, res) => {
 // Routes
 app.use("/api/auth", authRouter);
 app.use("/api/user", userRouter);
+app.use("/api/agents", agentRouter);
 
 export default app;

@@ -111,3 +111,24 @@ export interface EndpointInfo {
     requiresAuth: boolean;
     requestBody?: Record<string, string>;
 }
+
+// ── Agent Data Shapes ────────────────────────────────────────────────────────
+
+export interface Agent {
+    id: string;
+    ownerId: string;
+    name: string;
+    description: string;
+    createdAt: string;
+    updatedAt: string;
+}
+
+export interface CreateAgentInput {
+    name: string;
+    description: string;
+}
+
+export interface UpdateAgentInput {
+    name?: string;
+    description?: string;
+}

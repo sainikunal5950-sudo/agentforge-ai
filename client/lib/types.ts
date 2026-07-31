@@ -114,7 +114,21 @@ export interface EndpointInfo {
 
 // ── Agent Data Shapes ────────────────────────────────────────────────────────
 
-export interface Agent {
+export interface BaseAgentConfig {
+    role?: string;
+    goal?: string;
+    agentType?: string;
+    systemPrompt?: string;
+    preferredModel?: string;
+    temperature?: number;
+    skills?: string[];
+    memoryEnabled?: boolean;
+    executionMode?: 'manual' | 'automatic';
+    visibility?: 'private' | 'team' | 'public';
+    status?: 'active' | 'inactive' | 'archived';
+}
+
+export interface Agent extends BaseAgentConfig {
     id: string;
     ownerId: string;
     name: string;
@@ -123,12 +137,12 @@ export interface Agent {
     updatedAt: string;
 }
 
-export interface CreateAgentInput {
+export interface CreateAgentInput extends BaseAgentConfig {
     name: string;
     description: string;
 }
 
-export interface UpdateAgentInput {
+export interface UpdateAgentInput extends BaseAgentConfig {
     name?: string;
     description?: string;
 }

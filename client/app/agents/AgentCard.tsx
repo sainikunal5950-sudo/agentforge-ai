@@ -25,36 +25,56 @@ export default function AgentCard({ agent, onEdit, onDeleteSuccess }: AgentCardP
             await api.delete(`/api/agents/${agent.id}`);
             addToast("Agent deleted successfully!", "success");
             onDeleteSuccess();
-        } catch (err: any) {
-            const msg = err.response?.data?.message || err.message || "Failed to delete agent";
+        } catch (err: unknown) {
+            const error = err as { response?: { data?: { message?: string } }, message?: string };
+            const msg = error.response?.data?.message || error.message || "Failed to delete agent";
             addToast(msg, "error");
         } finally {
             setIsDeleting(false);
         }
     };
 
-    // Helper to format date
-    const formattedDate = new Date(agent.createdAt).toLocaleDateString(undefined, {
-        year: "numeric",
-        month: "short",
-        day: "numeric",
-    });
+    // Helper to format string values (capitalize first letter)
+    const capitalize = (s: string) => s ? s.charAt(0).toUpperCase() + s.slice(1) : "";
+
+    const getStatusBadge = (status: string) => {
+        switch (status) {
+            case "active":
+                return <span className="px-2.5 py-1 rounded-full bg-emerald-500/10 text-emerald-400 text-[10px] font-medium uppercase tracking-wide border border-emerald-500/20">Active</span>;
+            case "inactive":
+                return <span className="px-2.5 py-1 rounded-full bg-amber-500/10 text-amber-400 text-[10px] font-medium uppercase tracking-wide border border-amber-500/20">Inactive</span>;
+            case "archived":
+                return <span className="px-2.5 py-1 rounded-full bg-white/5 text-white/40 text-[10px] font-medium uppercase tracking-wide border border-white/10">Archived</span>;
+            default:
+                return <span className="px-2.5 py-1 rounded-full bg-emerald-500/10 text-emerald-400 text-[10px] font-medium uppercase tracking-wide border border-emerald-500/20">Active</span>;
+        }
+    };
 
     return (
-        <div className="bg-[#12121a] border border-white/5 rounded-xl p-5 hover:border-violet-500/30 transition-colors group">
-            <div className="flex justify-between items-start mb-3">
+        <div className="bg-[#12121a] border border-white/5 rounded-xl p-5 hover:border-violet-500/30 transition-all group flex flex-col h-full shadow-lg">
+            {/* Header */}
+            <div className="flex justify-between items-start mb-2">
                 <div>
-                    <h3 className="text-lg font-bold text-white mb-1 group-hover:text-violet-400 transition-colors">
-                        {agent.name}
-                    </h3>
-                    <p className="text-[10px] text-white/30 font-mono">ID: {agent.id}</p>
+                    <div className="flex items-center gap-2 mb-1">
+                        <h3 className="text-lg font-bold text-white group-hover:text-violet-400 transition-colors">
+                            {agent.name}
+                        </h3>
+                        {agent.agentType && (
+                            <span className="px-2 py-0.5 rounded text-[10px] font-medium bg-violet-500/10 text-violet-300 border border-violet-500/20">
+                                {capitalize(agent.agentType)}
+                            </span>
+                        )}
+                    </div>
+                    {agent.role && (
+                        <p className="text-xs text-white/50 font-medium">{agent.role}</p>
+                    )}
                 </div>
                 
-                <div className="flex items-center gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
                     <button
                         onClick={() => onEdit(agent)}
                         disabled={isDeleting}
-                        className="p-2 bg-white/5 hover:bg-white/10 rounded-lg text-white/70 hover:text-white transition-colors"
+                        className="p-1.5 bg-white/5 hover:bg-white/10 rounded-lg text-white/70 hover:text-white transition-colors"
                         title="Edit Agent"
                     >
                         <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -64,7 +84,7 @@ export default function AgentCard({ agent, onEdit, onDeleteSuccess }: AgentCardP
                     <button
                         onClick={handleDelete}
                         disabled={isDeleting}
-                        className="p-2 bg-red-500/10 hover:bg-red-500/20 text-red-400 hover:text-red-300 rounded-lg transition-colors"
+                        className="p-1.5 bg-red-500/10 hover:bg-red-500/20 text-red-400 hover:text-red-300 rounded-lg transition-colors"
                         title="Delete Agent"
                     >
                         {isDeleting ? (
@@ -78,15 +98,39 @@ export default function AgentCard({ agent, onEdit, onDeleteSuccess }: AgentCardP
                 </div>
             </div>
             
-            <p className="text-sm text-white/60 mb-4 line-clamp-3 min-h-[60px]">
+            {/* Description */}
+            <p className="text-sm text-white/60 mb-5 line-clamp-2 min-h-[40px]">
                 {agent.description || "No description provided."}
             </p>
             
-            <div className="flex items-center justify-between pt-4 border-t border-white/5">
-                <span className="text-[11px] text-white/40">Created {formattedDate}</span>
-                <span className="px-2.5 py-1 rounded-full bg-emerald-500/10 text-emerald-400 text-[10px] font-medium uppercase tracking-wide">
-                    Active
-                </span>
+            {/* Specs Grid */}
+            <div className="grid grid-cols-2 gap-y-3 gap-x-2 mb-5 mt-auto">
+                <div className="flex flex-col">
+                    <span className="text-[10px] text-white/40 uppercase tracking-wider mb-0.5">Model</span>
+                    <span className="text-xs text-white/80 font-medium">{agent.preferredModel || "N/A"}</span>
+                </div>
+                <div className="flex flex-col">
+                    <span className="text-[10px] text-white/40 uppercase tracking-wider mb-0.5">Temp</span>
+                    <span className="text-xs text-white/80 font-medium">{agent.temperature ?? "N/A"}</span>
+                </div>
+                <div className="flex flex-col">
+                    <span className="text-[10px] text-white/40 uppercase tracking-wider mb-0.5">Memory</span>
+                    <span className="text-xs text-white/80 font-medium">{agent.memoryEnabled ? "Enabled" : "Disabled"}</span>
+                </div>
+                <div className="flex flex-col">
+                    <span className="text-[10px] text-white/40 uppercase tracking-wider mb-0.5">Execution</span>
+                    <span className="text-xs text-white/80 font-medium">{capitalize(agent.executionMode || "") || "N/A"}</span>
+                </div>
+                <div className="flex flex-col col-span-2 mt-1">
+                    <span className="text-[10px] text-white/40 uppercase tracking-wider mb-0.5">Visibility</span>
+                    <span className="text-xs text-white/80 font-medium">{capitalize(agent.visibility || "") || "N/A"}</span>
+                </div>
+            </div>
+            
+            {/* Footer */}
+            <div className="flex items-center justify-between pt-4 border-t border-white/5 mt-auto">
+                <span className="text-[10px] text-white/30 font-mono">ID: {agent.id.slice(-6)}</span>
+                {getStatusBadge(agent.status || "active")}
             </div>
         </div>
     );

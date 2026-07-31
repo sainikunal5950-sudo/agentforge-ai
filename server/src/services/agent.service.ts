@@ -1,7 +1,16 @@
-import mongoose from "mongoose";
-import { Agent, IAgent } from "../models/agent.model.js";
-import { ICreateAgentInput, IUpdateAgentInput, IAgentResponse } from "../types/agent.types.js";
-
+import { Agent } from "../models/agent.model.js";
+import { mapToAgentResponse, fetchAndVerifyAgent } from "../utils/agent.utils.js";
+import { 
+    ICreateAgentInput, 
+    IUpdateAgentInput, 
+    IAgentResponse,
+    IAgentConfigResponse,
+    IUpdateAgentConfigInput,
+    IUpdateAgentStatusInput,
+    IUpdateAgentModelInput,
+    IUpdateAgentMemoryInput,
+    IUpdateAgentExecutionModeInput
+} from "../types/agent.types.js";
 // ─── 1. Why the Service Layer Exists ──────────────────────────────────────────
 // The Service Layer is the absolute heart of the application's architecture. 
 // It exists to decouple pure BUSINESS LOGIC from HTTP concerns (Controllers) 
@@ -14,20 +23,7 @@ import { ICreateAgentInput, IUpdateAgentInput, IAgentResponse } from "../types/a
 // - Separation of Concerns: Controllers only care about "How did the request come in?",
 //   while Services only care about "What are the rules of the business?".
 
-/**
- * Helper function to map a Mongoose Agent document to the clean IAgentResponse format.
- * This prevents leaking internal MongoDB details (like _id or __v) to the client.
- */
-const mapToAgentResponse = (agent: IAgent): IAgentResponse => {
-    return {
-        id: agent._id.toString(),
-        ownerId: agent.owner.toString(),
-        name: agent.name,
-        description: agent.description,
-        createdAt: agent.createdAt,
-        updatedAt: agent.updatedAt
-    };
-};
+
 
 /**
  * @function createAgentService
@@ -40,7 +36,18 @@ export const createAgentService = async (userId: string, input: ICreateAgentInpu
     const newAgent = await Agent.create({
         owner: userId,
         name: input.name,
-        description: input.description
+        description: input.description,
+        role: input.role,
+        goal: input.goal,
+        agentType: input.agentType,
+        systemPrompt: input.systemPrompt,
+        preferredModel: input.preferredModel,
+        temperature: input.temperature,
+        skills: input.skills,
+        memoryEnabled: input.memoryEnabled,
+        executionMode: input.executionMode,
+        visibility: input.visibility,
+        status: input.status
     });
 
     return mapToAgentResponse(newAgent);
@@ -61,35 +68,14 @@ export const getAgentsService = async (userId: string): Promise<IAgentResponse[]
     return agents.map(mapToAgentResponse);
 };
 
+
+
 /**
  * @function getAgentByIdService
  * @desc Retrieves a specific agent by ID, validating ownership securely.
  */
 export const getAgentByIdService = async (userId: string, agentId: string): Promise<IAgentResponse> => {
-    // 1. Validate ObjectId format
-    if (!mongoose.Types.ObjectId.isValid(agentId)) {
-        const error = new Error("Invalid agent ID format");
-        (error as any).statusCode = 400;
-        throw error;
-    }
-
-    // 2. Fetch the agent by ID only to check existence first
-    const agent = await Agent.findById(agentId);
-
-    // 3. Check existence (404)
-    if (!agent) {
-        const error = new Error("Agent not found");
-        (error as any).statusCode = 404;
-        throw error;
-    }
-
-    // 4. Check ownership (403)
-    if (agent.owner.toString() !== userId) {
-        const error = new Error("Forbidden: You do not own this agent");
-        (error as any).statusCode = 403;
-        throw error;
-    }
-
+    const agent = await fetchAndVerifyAgent(userId, agentId);
     return mapToAgentResponse(agent);
 };
 
@@ -98,33 +84,22 @@ export const getAgentByIdService = async (userId: string, agentId: string): Prom
  * @desc Updates specific fields on an agent, validating ownership.
  */
 export const updateAgentService = async (userId: string, agentId: string, input: IUpdateAgentInput): Promise<IAgentResponse> => {
-    // 1. Validate ObjectId format
-    if (!mongoose.Types.ObjectId.isValid(agentId)) {
-        const error = new Error("Invalid agent ID format");
-        (error as any).statusCode = 400;
-        throw error;
-    }
-
-    // 2. Fetch the agent by ID only to check existence first
-    const agent = await Agent.findById(agentId);
-
-    // 3. Check existence (404)
-    if (!agent) {
-        const error = new Error("Agent not found");
-        (error as any).statusCode = 404;
-        throw error;
-    }
-
-    // 4. Check ownership (403)
-    if (agent.owner.toString() !== userId) {
-        const error = new Error("Forbidden: You do not own this agent");
-        (error as any).statusCode = 403;
-        throw error;
-    }
+    const agent = await fetchAndVerifyAgent(userId, agentId);
 
     // 5. Update only allowed fields to prevent mass assignment vulnerabilities
     if (input.name !== undefined) agent.name = input.name;
     if (input.description !== undefined) agent.description = input.description;
+    if (input.role !== undefined) agent.role = input.role;
+    if (input.goal !== undefined) agent.goal = input.goal;
+    if (input.agentType !== undefined) agent.agentType = input.agentType;
+    if (input.systemPrompt !== undefined) agent.systemPrompt = input.systemPrompt;
+    if (input.preferredModel !== undefined) agent.preferredModel = input.preferredModel;
+    if (input.temperature !== undefined) agent.temperature = input.temperature;
+    if (input.skills !== undefined) agent.skills = input.skills;
+    if (input.memoryEnabled !== undefined) agent.memoryEnabled = input.memoryEnabled;
+    if (input.executionMode !== undefined) agent.executionMode = input.executionMode;
+    if (input.visibility !== undefined) agent.visibility = input.visibility;
+    if (input.status !== undefined) agent.status = input.status;
 
     // 6. Save and return updated document
     const updatedAgent = await agent.save();
@@ -137,29 +112,7 @@ export const updateAgentService = async (userId: string, agentId: string, input:
  * @desc Deletes an agent from the database securely.
  */
 export const deleteAgentService = async (userId: string, agentId: string): Promise<void> => {
-    // 1. Validate ObjectId format
-    if (!mongoose.Types.ObjectId.isValid(agentId)) {
-        const error = new Error("Invalid agent ID format");
-        (error as any).statusCode = 400;
-        throw error;
-    }
-
-    // 2. Fetch the agent by ID only to check existence first
-    const agent = await Agent.findById(agentId);
-
-    // 3. Check existence (404)
-    if (!agent) {
-        const error = new Error("Agent not found");
-        (error as any).statusCode = 404;
-        throw error;
-    }
-
-    // 4. Check ownership (403)
-    if (agent.owner.toString() !== userId) {
-        const error = new Error("Forbidden: You do not own this agent");
-        (error as any).statusCode = 403;
-        throw error;
-    }
+    const agent = await fetchAndVerifyAgent(userId, agentId);
 
     // 5. Delete the agent securely
     await agent.deleteOne();
@@ -168,3 +121,5 @@ export const deleteAgentService = async (userId: string, agentId: string): Promi
     // this service function would act as the orchestrator to cascade the deletion 
     // (e.g., calling pinecone.deleteNamespace(agentId)) before resolving.
 };
+
+

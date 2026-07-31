@@ -24,24 +24,36 @@ import { Types } from "mongoose";
 // ─── 4. Interface Definitions ─────────────────────────────────────────────────
 
 /**
+ * Base configuration properties shared across multiple inputs and responses.
+ */
+export interface IBaseAgentConfig {
+    role?: string;
+    goal?: string;
+    agentType?: string;
+    systemPrompt?: string;
+    preferredModel?: string;
+    temperature?: number;
+    skills?: string[];
+    memoryEnabled?: boolean;
+    executionMode?: 'manual' | 'automatic';
+    visibility?: 'private' | 'team' | 'public';
+    status?: 'active' | 'inactive' | 'archived';
+}
+
+/**
  * ICreateAgentInput
  * Represents the incoming HTTP Request body for POST /api/agents.
- * We only allow the user to define the name and an optional description.
- * Notice we do NOT include 'owner' here, because the owner is securely 
- * extracted from the JWT token in the Auth Middleware, not trusted from the client payload.
  */
-export interface ICreateAgentInput {
+export interface ICreateAgentInput extends IBaseAgentConfig {
     name: string;
     description?: string;
 }
 
 /**
  * IUpdateAgentInput
- * Represents the incoming HTTP Request body for PATCH /api/agents/:id.
- * All fields are optional because a user might only want to update the name, 
- * or only the description, without sending the entire object.
+ * Represents the incoming HTTP Request body for PUT /api/agents/:id.
  */
-export interface IUpdateAgentInput {
+export interface IUpdateAgentInput extends IBaseAgentConfig {
     name?: string;
     description?: string;
 }
@@ -49,10 +61,8 @@ export interface IUpdateAgentInput {
 /**
  * IAgentResponse
  * Represents the outgoing HTTP Response payload sent back to the frontend.
- * We map MongoDB's internal `_id` (ObjectId) to a clean `id` (string) for easier 
- * JSON serialization and frontend consumption.
  */
-export interface IAgentResponse {
+export interface IAgentResponse extends IBaseAgentConfig {
     id: string;
     ownerId: string;
     name: string;
@@ -64,10 +74,32 @@ export interface IAgentResponse {
 /**
  * IAgentFilterParams
  * Represents optional query parameters for GET /api/agents.
- * Allows the client to filter or paginate the list of their agents.
  */
 export interface IAgentFilterParams {
     search?: string; // To search by agent name
     page?: number;
     limit?: number;
+}
+
+/**
+ * Configuration-specific interfaces for the Agent Configuration APIs.
+ */
+export interface IAgentConfigResponse extends IBaseAgentConfig {}
+export interface IUpdateAgentConfigInput extends IBaseAgentConfig {}
+
+export interface IUpdateAgentStatusInput {
+    status: 'active' | 'inactive' | 'archived';
+}
+
+export interface IUpdateAgentModelInput {
+    preferredModel: string;
+    temperature?: number;
+}
+
+export interface IUpdateAgentMemoryInput {
+    memoryEnabled: boolean;
+}
+
+export interface IUpdateAgentExecutionModeInput {
+    executionMode: 'manual' | 'automatic';
 }

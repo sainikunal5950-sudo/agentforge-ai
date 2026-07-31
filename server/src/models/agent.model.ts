@@ -16,6 +16,17 @@ export interface IAgent extends Document {
     // description: A brief summary of what the agent does or its persona.
     // Why it exists: Provides context and purpose for the agent to the user.
     description: string;
+    role?: string;
+    goal?: string;
+    agentType?: string;
+    systemPrompt?: string;
+    preferredModel?: string;
+    temperature?: number;
+    skills?: string[];
+    memoryEnabled?: boolean;
+    executionMode?: 'manual' | 'automatic';
+    visibility?: 'private' | 'team' | 'public';
+    status?: 'active' | 'inactive' | 'archived';
 
     createdAt: Date;
     updatedAt: Date;
@@ -66,6 +77,55 @@ const AgentSchema = new Schema<IAgent>(
             default: "",
             trim: true,
             maxlength: [500, "Description must not exceed 500 characters"],
+        },
+        role: {
+            type: String,
+            trim: true,
+        },
+        goal: {
+            type: String,
+            trim: true,
+        },
+        agentType: {
+            type: String,
+            trim: true,
+        },
+        systemPrompt: {
+            type: String,
+            trim: true,
+        },
+        preferredModel: {
+            type: String,
+            trim: true,
+        },
+        temperature: {
+            type: Number,
+            min: [0, "Temperature cannot be less than 0"],
+            max: [1, "Temperature cannot be more than 1"],
+            default: 0.7,
+        },
+        skills: {
+            type: [String],
+            default: [],
+        },
+        memoryEnabled: {
+            type: Boolean,
+            default: false,
+        },
+        executionMode: {
+            type: String,
+            enum: ['manual', 'automatic'],
+            default: 'manual',
+        },
+        visibility: {
+            type: String,
+            enum: ['private', 'team', 'public'],
+            default: 'private',
+        },
+        status: {
+            type: String,
+            enum: ['active', 'inactive', 'archived'],
+            default: 'active',
         },
     },
     {

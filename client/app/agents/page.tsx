@@ -51,6 +51,7 @@ export default function AgentsDashboard() {
 
             {/* Form Section: Reused for Create and Edit */}
             <AgentForm 
+                key={editingAgent ? editingAgent.id : "new-agent"}
                 initialData={editingAgent} 
                 onSuccess={handleSuccess} 
                 onCancel={editingAgent ? handleCancelEdit : undefined} 
@@ -77,7 +78,7 @@ export default function AgentsDashboard() {
                         </div>
                         <h3 className="text-lg font-medium text-white mb-2">No agents found</h3>
                         <p className="text-white/50 max-w-sm mx-auto">
-                            You haven't created any agents yet. Use the form above to get started.
+                            You haven&apos;t created any agents yet. Use the form above to get started.
                         </p>
                     </div>
                 ) : (

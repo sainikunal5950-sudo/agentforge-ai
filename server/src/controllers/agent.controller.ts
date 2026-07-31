@@ -1,6 +1,14 @@
 import { Response } from "express";
 import { IAuthenticatedRequest } from "../types/auth.types.js";
-import { ICreateAgentInput, IUpdateAgentInput } from "../types/agent.types.js";
+import { 
+    ICreateAgentInput, 
+    IUpdateAgentInput,
+    IUpdateAgentConfigInput,
+    IUpdateAgentStatusInput,
+    IUpdateAgentModelInput,
+    IUpdateAgentMemoryInput,
+    IUpdateAgentExecutionModeInput
+} from "../types/agent.types.js";
 import {
     createAgentService,
     getAgentsService,
@@ -8,6 +16,14 @@ import {
     updateAgentService,
     deleteAgentService
 } from "../services/agent.service.js";
+import {
+    getAgentConfigService,
+    updateAgentConfigService,
+    updateAgentStatusService,
+    updateAgentModelService,
+    updateAgentMemoryService,
+    updateAgentExecutionModeService
+} from "../services/agent.config.service.js";
 
 // ─── The Request-Response Lifecycle in Controllers ─────────────────────────────
 // The Controller acts strictly as the "Traffic Cop" or "Orchestrator" of our application.
@@ -23,6 +39,43 @@ import {
 //    catch the error and map it to an HTTP error response (e.g., 400 Bad Request).
 //
 // By ensuring NO business logic lives here, we make the codebase modular, testable, and robust.
+
+// By ensuring NO business logic lives here, we make the codebase modular, testable, and robust.
+
+/**
+ * Maps varying errors (Mongoose Validation, DB Conflict, Service Thrown Errors) to 
+ * standardized HTTP Status Codes and clear error messages.
+ */
+const handleErrorResponse = (res: Response, error: any, defaultMessage: string = "Internal server error"): void => {
+    // 1. Service Layer Errors (Explicitly thrown with .statusCode like 403, 404)
+    if (error.statusCode) {
+        res.status(error.statusCode).json({ success: false, message: error.message });
+        return;
+    }
+    
+    // 2. Mongoose Validation Errors (400)
+    if (error.name === "ValidationError") {
+        const messages = Object.values(error.errors).map((err: any) => err.message).join(", ");
+        res.status(400).json({ success: false, message: `Validation Error: ${messages}` });
+        return;
+    }
+    
+    // 3. Mongoose Cast Errors (Invalid ObjectId format thrown by Mongoose directly) (400)
+    if (error.name === "CastError") {
+        res.status(400).json({ success: false, message: `Invalid format for ${error.path}` });
+        return;
+    }
+
+    // 4. MongoDB Duplicate Key Conflict (409)
+    if (error.code === 11000) {
+        res.status(409).json({ success: false, message: "Conflict: An agent with this unique property already exists." });
+        return;
+    }
+
+    // 5. Unhandled Exceptions (500)
+    console.error(`[Agent API Error]:`, error);
+    res.status(500).json({ success: false, message: defaultMessage });
+};
 
 /**
  * @function createAgent
@@ -40,7 +93,7 @@ export const createAgent = async (req: IAuthenticatedRequest, res: Response): Pr
         // Respond with HTTP 201 Created, standard when a new resource is successfully inserted
         res.status(201).json(newAgent);
     } catch (error: any) {
-        res.status(400).json({ message: error.message || "Failed to create agent" });
+        handleErrorResponse(res, error, "Failed to create agent");
     }
 };
 
@@ -59,7 +112,7 @@ export const getAgents = async (req: IAuthenticatedRequest, res: Response): Prom
         // Respond with HTTP 200 OK with the array of agents
         res.status(200).json(agents);
     } catch (error: any) {
-        res.status(500).json({ message: error.message || "Failed to retrieve agents" });
+        handleErrorResponse(res, error, "Failed to retrieve agents");
     }
 };
 
@@ -79,8 +132,7 @@ export const getAgentById = async (req: IAuthenticatedRequest, res: Response): P
         // Respond with HTTP 200 OK containing the single agent object
         res.status(200).json(agent);
     } catch (error: any) {
-        const statusCode = error.statusCode || 500;
-        res.status(statusCode).json({ message: error.message || "Failed to retrieve agent" });
+        handleErrorResponse(res, error, "Failed to retrieve agent");
     }
 };
 
@@ -101,8 +153,7 @@ export const updateAgent = async (req: IAuthenticatedRequest, res: Response): Pr
         // Respond with HTTP 200 OK and the newly updated agent state
         res.status(200).json(updatedAgent);
     } catch (error: any) {
-        const statusCode = error.statusCode || 400;
-        res.status(statusCode).json({ message: error.message || "Failed to update agent" });
+        handleErrorResponse(res, error, "Failed to update agent");
     }
 };
 
@@ -123,7 +174,79 @@ export const deleteAgent = async (req: IAuthenticatedRequest, res: Response): Pr
         // Note: 204 No Content is also acceptable for DELETEs, but 200 allows us to send a JSON success message.
         res.status(200).json({ message: "Agent deleted successfully" });
     } catch (error: any) {
-        const statusCode = error.statusCode || 400;
-        res.status(statusCode).json({ message: error.message || "Failed to delete agent" });
+        handleErrorResponse(res, error, "Failed to delete agent");
+    }
+};
+
+// ─── Agent Configuration Controllers ───────────────────────────────────────────
+
+export const getAgentConfig = async (req: IAuthenticatedRequest, res: Response): Promise<void> => {
+    try {
+        const userId = req.user!._id.toString();
+        const agentId = req.params.id.toString();
+        const config = await getAgentConfigService(userId, agentId);
+        res.status(200).json(config);
+    } catch (error: any) {
+        handleErrorResponse(res, error, "Failed to retrieve agent configuration");
+    }
+};
+
+export const updateAgentConfig = async (req: IAuthenticatedRequest, res: Response): Promise<void> => {
+    try {
+        const userId = req.user!._id.toString();
+        const agentId = req.params.id.toString();
+        const input: IUpdateAgentConfigInput = req.body;
+        const updatedConfig = await updateAgentConfigService(userId, agentId, input);
+        res.status(200).json(updatedConfig);
+    } catch (error: any) {
+        handleErrorResponse(res, error, "Failed to update agent configuration");
+    }
+};
+
+export const updateAgentStatus = async (req: IAuthenticatedRequest, res: Response): Promise<void> => {
+    try {
+        const userId = req.user!._id.toString();
+        const agentId = req.params.id.toString();
+        const input: IUpdateAgentStatusInput = req.body;
+        const updatedAgent = await updateAgentStatusService(userId, agentId, input);
+        res.status(200).json(updatedAgent);
+    } catch (error: any) {
+        handleErrorResponse(res, error, "Failed to update agent status");
+    }
+};
+
+export const updateAgentModel = async (req: IAuthenticatedRequest, res: Response): Promise<void> => {
+    try {
+        const userId = req.user!._id.toString();
+        const agentId = req.params.id.toString();
+        const input: IUpdateAgentModelInput = req.body;
+        const updatedAgent = await updateAgentModelService(userId, agentId, input);
+        res.status(200).json(updatedAgent);
+    } catch (error: any) {
+        handleErrorResponse(res, error, "Failed to update agent model");
+    }
+};
+
+export const updateAgentMemory = async (req: IAuthenticatedRequest, res: Response): Promise<void> => {
+    try {
+        const userId = req.user!._id.toString();
+        const agentId = req.params.id.toString();
+        const input: IUpdateAgentMemoryInput = req.body;
+        const updatedAgent = await updateAgentMemoryService(userId, agentId, input);
+        res.status(200).json(updatedAgent);
+    } catch (error: any) {
+        handleErrorResponse(res, error, "Failed to update agent memory");
+    }
+};
+
+export const updateAgentExecutionMode = async (req: IAuthenticatedRequest, res: Response): Promise<void> => {
+    try {
+        const userId = req.user!._id.toString();
+        const agentId = req.params.id.toString();
+        const input: IUpdateAgentExecutionModeInput = req.body;
+        const updatedAgent = await updateAgentExecutionModeService(userId, agentId, input);
+        res.status(200).json(updatedAgent);
+    } catch (error: any) {
+        handleErrorResponse(res, error, "Failed to update agent execution mode");
     }
 };

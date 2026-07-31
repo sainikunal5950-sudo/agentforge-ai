@@ -1,10 +1,18 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
+import React, { useState } from "react";
 import api from "@/lib/axios";
-import { useApiCall } from "@/hooks/useApiCall";
-import { Agent, CreateAgentInput, UpdateAgentInput } from "@/lib/types";
+import { Agent } from "@/lib/types";
 import { useToast } from "@/contexts/ToastContext";
+
+// Import our new UI components
+import { Card, CardSection } from "@/components/ui/Card";
+import FormField from "@/components/ui/FormField";
+import TextareaField from "@/components/ui/TextareaField";
+import SelectField from "@/components/ui/SelectField";
+import Toggle from "@/components/ui/Toggle";
+import RadioCards from "@/components/ui/RadioCards";
+import TagInput from "@/components/ui/TagInput";
 
 interface AgentFormProps {
     initialData?: Agent;
@@ -14,19 +22,24 @@ interface AgentFormProps {
 
 export default function AgentForm({ initialData, onSuccess, onCancel }: AgentFormProps) {
     const isEdit = !!initialData;
-    const [name, setName] = useState(initialData?.name || "");
-    const [description, setDescription] = useState(initialData?.description || "");
     const { addToast } = useToast();
     
-    // We use our custom hook to handle loading/error states for the API call
-    const { state, execute } = useApiCall<Agent>();
+    // Form State
+    const [name, setName] = useState(initialData?.name || "");
+    const [description, setDescription] = useState(initialData?.description || "");
+    const [role, setRole] = useState(initialData?.role || "");
+    const [goal, setGoal] = useState(initialData?.goal || "");
+    const [agentType, setAgentType] = useState(initialData?.agentType || "assistant");
+    const [systemPrompt, setSystemPrompt] = useState(initialData?.systemPrompt || "");
+    const [preferredModel, setPreferredModel] = useState(initialData?.preferredModel || "gpt-4o");
+    const [temperature, setTemperature] = useState<number>(initialData?.temperature ?? 0.7);
+    const [skills, setSkills] = useState<string[]>(initialData?.skills || []);
+    const [memoryEnabled, setMemoryEnabled] = useState<boolean>(initialData?.memoryEnabled ?? false);
+    const [executionMode, setExecutionMode] = useState<'manual' | 'automatic'>(initialData?.executionMode || "manual");
+    const [visibility, setVisibility] = useState<'private' | 'team' | 'public'>(initialData?.visibility || "private");
+    const [status, setStatus] = useState<'active' | 'inactive' | 'archived'>(initialData?.status || "active");
 
-    useEffect(() => {
-        if (initialData) {
-            setName(initialData.name);
-            setDescription(initialData.description);
-        }
-    }, [initialData]);
+    const [isSubmitting, setIsSubmitting] = useState(false);
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
@@ -36,99 +49,250 @@ export default function AgentForm({ initialData, onSuccess, onCancel }: AgentFor
             return;
         }
 
+        setIsSubmitting(true);
         try {
-            await execute(async () => {
-                if (isEdit) {
-                    const payload: UpdateAgentInput = { name, description };
-                    return api.put(`/api/agents/${initialData.id}`, payload);
-                } else {
-                    const payload: CreateAgentInput = { name, description };
-                    return api.post("/api/agents", payload);
-                }
-            });
+            const payload = {
+                name,
+                description,
+                role,
+                goal,
+                agentType,
+                systemPrompt,
+                preferredModel,
+                temperature: Number(temperature),
+                skills,
+                memoryEnabled,
+                executionMode,
+                visibility,
+                status
+            };
 
-            // The execute function catches errors and sets state.error, so we check if it succeeded
-            // Wait, useApiCall execute function doesn't return a value, but we can check state.error after?
-            // Actually, execute() resolves. We can just wait for it. But wait, if it fails, it catches the error internally and doesn't throw.
-            // Let's rely on onSuccess callback, but we need to know it succeeded.
-            // A better way is to do the try-catch ourselves or use the state in a useEffect.
-            // Let's just do it directly so we can trigger onSuccess() reliably.
-        } catch (err) {
+            if (isEdit) {
+                // Unified update endpoint handles both base info and config
+                await api.put(`/api/agents/${initialData.id}`, payload);
+                addToast("Agent updated successfully!", "success");
+            } else {
+                await api.post("/api/agents", payload);
+                addToast("Agent created successfully!", "success");
+            }
+            onSuccess();
+        } catch (err: unknown) {
+            const error = err as { response?: { data?: { message?: string } }, message?: string };
+            const msg = error.response?.data?.message || error.message || "Failed to save agent";
+            addToast(msg, "error");
             console.error(err);
+        } finally {
+            setIsSubmitting(false);
         }
     };
 
-    // To reliably trigger onSuccess, we should use a useEffect watching state.data and state.timestamp
-    // But since execute() swallows errors, let's just use axios directly for the form submission to have fine-grained control,
-    // OR we can use execute and then check if state.error is null.
-    // Let's refactor the submit handler to use execute, and watch for success:
-    useEffect(() => {
-        if (state.data && !state.loading && !state.error && state.timestamp) {
-            addToast(isEdit ? "Agent updated successfully!" : "Agent created successfully!", "success");
-            setName("");
-            setDescription("");
-            onSuccess();
-        }
-        if (state.error && !state.loading) {
-            addToast(state.error, "error");
-        }
-    }, [state.data, state.error, state.loading, state.timestamp, isEdit, addToast, onSuccess]);
-
     return (
-        <form onSubmit={handleSubmit} className="bg-white/5 border border-white/10 rounded-xl p-5 mb-6 shadow-xl">
-            <h2 className="text-lg font-semibold mb-4 text-violet-100">
-                {isEdit ? "Edit Agent" : "Create New Agent"}
-            </h2>
-            
-            <div className="space-y-4">
-                <div>
-                    <label className="block text-sm font-medium text-white/70 mb-1">Name</label>
-                    <input
-                        type="text"
-                        value={name}
-                        onChange={(e) => setName(e.target.value)}
-                        className="w-full bg-black/50 border border-white/10 rounded-lg px-4 py-2.5 text-sm text-white focus:outline-none focus:border-violet-500 transition-colors"
-                        placeholder="e.g. Trading Bot"
-                        disabled={state.loading}
-                    />
-                </div>
-                
-                <div>
-                    <label className="block text-sm font-medium text-white/70 mb-1">Description</label>
-                    <textarea
-                        value={description}
-                        onChange={(e) => setDescription(e.target.value)}
-                        className="w-full bg-black/50 border border-white/10 rounded-lg px-4 py-2.5 text-sm text-white focus:outline-none focus:border-violet-500 transition-colors min-h-[100px]"
-                        placeholder="What does this agent do?"
-                        disabled={state.loading}
-                    />
-                </div>
-
-                <div className="flex items-center gap-3 pt-2">
-                    <button
-                        type="submit"
-                        disabled={state.loading}
-                        className="bg-violet-600 hover:bg-violet-500 text-white px-5 py-2.5 rounded-lg text-sm font-medium transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center min-w-[120px]"
-                    >
-                        {state.loading ? (
-                            <span className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin"></span>
-                        ) : (
-                            isEdit ? "Save Changes" : "Create Agent"
-                        )}
-                    </button>
-                    
+        <form onSubmit={handleSubmit} className="mb-8">
+            <div className="flex items-center justify-between mb-6">
+                <h2 className="text-xl font-bold text-white">
+                    {isEdit ? "Edit AI Employee" : "Onboard New AI Employee"}
+                </h2>
+                <div className="flex items-center gap-3">
                     {isEdit && onCancel && (
                         <button
                             type="button"
                             onClick={onCancel}
-                            disabled={state.loading}
-                            className="bg-white/10 hover:bg-white/20 text-white px-5 py-2.5 rounded-lg text-sm font-medium transition-colors disabled:opacity-50"
+                            disabled={isSubmitting}
+                            className="bg-white/5 hover:bg-white/10 text-white px-5 py-2.5 rounded-lg text-sm font-medium transition-colors disabled:opacity-50"
                         >
                             Cancel
                         </button>
                     )}
+                    <button
+                        type="submit"
+                        disabled={isSubmitting}
+                        className="bg-violet-600 hover:bg-violet-500 text-white px-6 py-2.5 rounded-lg text-sm font-medium transition-colors disabled:opacity-50 flex items-center justify-center min-w-[140px] shadow-[0_0_15px_rgba(124,58,237,0.3)] hover:shadow-[0_0_25px_rgba(124,58,237,0.5)]"
+                    >
+                        {isSubmitting ? (
+                            <span className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin"></span>
+                        ) : (
+                            isEdit ? "Save Changes" : "Deploy Agent"
+                        )}
+                    </button>
                 </div>
             </div>
+
+            <Card className="mb-6">
+                <CardSection 
+                    title="Basic Information" 
+                    description="The foundational details that identify this agent across your workspace."
+                >
+                    <FormField
+                        label="Agent Name *"
+                        placeholder="e.g. Sales Development Representative"
+                        value={name}
+                        onChange={(e) => setName(e.target.value)}
+                        disabled={isSubmitting}
+                    />
+                    <TextareaField
+                        label="Description"
+                        placeholder="Provide a brief summary of what this agent does."
+                        value={description}
+                        onChange={(e) => setDescription(e.target.value)}
+                        disabled={isSubmitting}
+                    />
+                </CardSection>
+
+                <CardSection 
+                    title="Identity & Purpose" 
+                    description="Define the overarching objective and persona of the AI."
+                >
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                        <FormField
+                            label="Role"
+                            placeholder="e.g. Code Reviewer"
+                            value={role}
+                            onChange={(e) => setRole(e.target.value)}
+                            disabled={isSubmitting}
+                        />
+                        <SelectField
+                            label="Agent Type"
+                            value={agentType}
+                            onChange={(e) => setAgentType(e.target.value)}
+                            disabled={isSubmitting}
+                            options={[
+                                { label: "Assistant", value: "assistant" },
+                                { label: "Worker (Autonomous)", value: "worker" },
+                                { label: "Researcher", value: "researcher" },
+                                { label: "Supervisor", value: "supervisor" }
+                            ]}
+                        />
+                    </div>
+                    <FormField
+                        label="Goal"
+                        placeholder="e.g. To identify bugs and suggest optimizations."
+                        value={goal}
+                        onChange={(e) => setGoal(e.target.value)}
+                        disabled={isSubmitting}
+                    />
+                </CardSection>
+
+                <CardSection 
+                    title="Behaviour" 
+                    description="Configure the core model parameters and the system instructions."
+                >
+                    <TextareaField
+                        label="System Prompt"
+                        placeholder="You are an expert software engineer..."
+                        value={systemPrompt}
+                        onChange={(e) => setSystemPrompt(e.target.value)}
+                        disabled={isSubmitting}
+                        className="min-h-[150px] font-mono text-xs"
+                    />
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mt-4">
+                        <SelectField
+                            label="Preferred Model"
+                            value={preferredModel}
+                            onChange={(e) => setPreferredModel(e.target.value)}
+                            disabled={isSubmitting}
+                            options={[
+                                { label: "GPT-4o", value: "gpt-4o" },
+                                { label: "Claude 3.5 Sonnet", value: "claude-3.5-sonnet" },
+                                { label: "Gemini 1.5 Pro", value: "gemini-1.5-pro" },
+                                { label: "Llama 3 (70B)", value: "llama-3-70b" }
+                            ]}
+                        />
+                        <div>
+                            <div className="flex justify-between items-center mb-1">
+                                <label className="block text-sm font-medium text-white/70">Temperature ({temperature})</label>
+                            </div>
+                            <input
+                                type="range"
+                                min="0"
+                                max="1"
+                                step="0.1"
+                                value={temperature}
+                                onChange={(e) => setTemperature(parseFloat(e.target.value))}
+                                disabled={isSubmitting}
+                                className="w-full accent-violet-500 h-2 bg-white/10 rounded-lg appearance-none cursor-pointer"
+                            />
+                            <div className="flex justify-between text-[10px] text-white/40 mt-1 px-1">
+                                <span>Precise</span>
+                                <span>Creative</span>
+                            </div>
+                        </div>
+                    </div>
+                </CardSection>
+
+                <CardSection 
+                    title="Capabilities & Memory" 
+                    description="Equip your agent with specific tools and long-term context."
+                >
+                    <TagInput
+                        label="Skills (Tools)"
+                        placeholder="e.g. WebSearch, ExecuteCode, ReadFiles..."
+                        tags={skills}
+                        onChange={setSkills}
+                        disabled={isSubmitting}
+                    />
+                    <div className="mt-6 p-4 rounded-lg bg-white/5 border border-white/5">
+                        <Toggle
+                            label="Enable Long-Term Memory"
+                            description="Allows the agent to recall past conversations and learn over time using a vector database."
+                            checked={memoryEnabled}
+                            onChange={setMemoryEnabled}
+                            disabled={isSubmitting}
+                        />
+                    </div>
+                </CardSection>
+
+                <CardSection 
+                    title="Execution & Visibility" 
+                    description="Determine how this agent operates and who can see it."
+                >
+                    <div className="space-y-6">
+                        <div>
+                            <label className="block text-sm font-medium text-white/70 mb-3">Execution Mode</label>
+                            <RadioCards
+                                value={executionMode}
+                                onChange={(val) => setExecutionMode(val as 'manual' | 'automatic')}
+                                disabled={isSubmitting}
+                                options={[
+                                    { label: "Manual", value: "manual", description: "Agent requires human approval before executing actions." },
+                                    { label: "Automatic", value: "automatic", description: "Agent can execute actions fully autonomously." }
+                                ]}
+                            />
+                        </div>
+                        <div>
+                            <label className="block text-sm font-medium text-white/70 mb-3">Visibility</label>
+                            <RadioCards
+                                value={visibility}
+                                onChange={(val) => setVisibility(val as 'private' | 'team' | 'public')}
+                                disabled={isSubmitting}
+                                columns={3}
+                                options={[
+                                    { label: "Private", value: "private", description: "Only you can use this agent." },
+                                    { label: "Team", value: "team", description: "Your organization can use it." },
+                                    { label: "Public", value: "public", description: "Anyone can discover it." }
+                                ]}
+                            />
+                        </div>
+                    </div>
+                </CardSection>
+
+                <CardSection 
+                    title="Agent Status" 
+                    description="Current operational status of this agent."
+                    isLast={true}
+                >
+                    <RadioCards
+                        value={status}
+                        onChange={(val) => setStatus(val as 'active' | 'inactive' | 'archived')}
+                        disabled={isSubmitting}
+                        columns={3}
+                        options={[
+                            { label: "Active", value: "active", description: "Online and ready." },
+                            { label: "Inactive", value: "inactive", description: "Offline, cannot be invoked." },
+                            { label: "Archived", value: "archived", description: "Hidden from views." }
+                        ]}
+                    />
+                </CardSection>
+            </Card>
         </form>
     );
 }

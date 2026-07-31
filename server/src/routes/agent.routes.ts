@@ -4,7 +4,13 @@ import {
     getAgents,
     getAgentById,
     updateAgent,
-    deleteAgent
+    deleteAgent,
+    getAgentConfig,
+    updateAgentConfig,
+    updateAgentStatus,
+    updateAgentModel,
+    updateAgentMemory,
+    updateAgentExecutionMode
 } from "../controllers/agent.controller.js";
 import { requireAuth } from "../middleware/auth.middleware.js";
 
@@ -84,6 +90,15 @@ router.put("/:id", requireAuth, updateAgent);
  * @explanation DELETE clearly communicates the intent to destroy the resource identified by the :id path parameter.
  */
 router.delete("/:id", requireAuth, deleteAgent);
+
+// ─── 4. Agent Configuration Routes ─────────────────────────────────────────────
+
+router.get("/:id/config", requireAuth, getAgentConfig);
+router.put("/:id/config", requireAuth, updateAgentConfig);
+router.patch("/:id/status", requireAuth, updateAgentStatus);
+router.patch("/:id/model", requireAuth, updateAgentModel);
+router.patch("/:id/memory", requireAuth, updateAgentMemory);
+router.patch("/:id/execution-mode", requireAuth, updateAgentExecutionMode);
 
 // Export the router to be mounted in the main Express application.
 export default router;

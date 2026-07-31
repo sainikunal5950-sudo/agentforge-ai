@@ -10,7 +10,6 @@
 // ─────────────────────────────────────────────────────────────────────────────
 
 import { useState } from "react";
-import type { Metadata } from "next";
 import ApiCard from "@/components/ui/ApiCard";
 import FormField from "@/components/ui/FormField";
 import ActionButton from "@/components/ui/ActionButton";

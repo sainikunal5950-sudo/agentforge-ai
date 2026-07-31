@@ -2,6 +2,7 @@ import { Response } from "express";
 import { IAuthenticatedRequest } from "../../types/auth.types.js";
 import { IAIRequest } from "../types/ai.types.js";
 import { processAIRequestService } from "../services/ai.service.js";
+import { handleErrorResponse } from "../../utils/error.utils.js";
 
 /**
  * Controller to handle incoming AI generation requests.
@@ -9,19 +10,28 @@ import { processAIRequestService } from "../services/ai.service.js";
 export const executeAIRequest = async (req: IAuthenticatedRequest, res: Response): Promise<void> => {
     try {
         const userId = req.user!._id.toString();
-        const request: IAIRequest = req.body;
+        const { agentId, message } = req.body;
+
+        if (!agentId || typeof agentId !== 'string' || !agentId.trim()) {
+            res.status(400).json({ success: false, message: "Missing or invalid required field: agentId" });
+            return;
+        }
+
+        if (!message || typeof message !== 'string' || !message.trim()) {
+            res.status(400).json({ success: false, message: "Missing or invalid required field: message" });
+            return;
+        }
+
+        const request: IAIRequest = {
+            agentId,
+            messages: [{ role: "user", content: message }]
+        };
 
         // Delegate to the AI execution service
         const response = await processAIRequestService(userId, request);
 
         res.status(200).json({ success: true, data: response });
     } catch (error: any) {
-        if (error.message === "No providers implemented yet.") {
-            res.status(501).json({ success: false, message: error.message });
-            return;
-        }
-
-        console.error(`[AI Controller Error]:`, error);
-        res.status(500).json({ success: false, message: "Internal server error during AI execution." });
+        handleErrorResponse(res, error, "Internal server error during AI execution");
     }
 };

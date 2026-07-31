@@ -6,6 +6,7 @@ import path from "path";
 import authRouter from "./routes/auth.routes.js";
 import userRouter from "./routes/user.routes.js";
 import agentRouter from "./routes/agent.routes.js";
+import aiRouter from "./routes/ai.routes.js";
 
 const app = express();
 
@@ -47,5 +48,6 @@ app.get("/", (req, res) => {
 app.use("/api/auth", authRouter);
 app.use("/api/user", userRouter);
 app.use("/api/agents", agentRouter);
+app.use("/api", aiRouter);
 
 export default app;

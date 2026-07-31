@@ -2,6 +2,7 @@ import { IAIRequest, IAIResponse } from "../types/ai.types.js";
 import { routeToProvider } from "../utils/model-router.js";
 import { buildPrompt } from "../utils/prompt-builder.js";
 import { formatResponse } from "../utils/response-formatter.js";
+import { getAgentConfigService } from "../../services/agent.config.service.js";
 
 /**
  * Core service logic for the AI execution engine.
@@ -9,20 +10,29 @@ import { formatResponse } from "../utils/response-formatter.js";
  * and formats the result.
  */
 export const processAIRequestService = async (userId: string, request: IAIRequest): Promise<IAIResponse> => {
-    // 1. Build the prompt/context based on the agent's memory and configuration
-    // (We will fetch the actual agent configuration later. For now, pass a dummy config and the last message content).
+    // 1. Load Agent & Configuration (implicitly validates user ownership)
+    const agentConfig = await getAgentConfigService(userId, request.agentId);
+
+    // 2. Extract user message and build the prompt
+    // Assuming the last message in the array is the current user request
     const userMessage = request.messages[request.messages.length - 1]?.content || "";
-    const finalPromptString = buildPrompt({}, userMessage);
+    const finalPromptString = buildPrompt(agentConfig, userMessage);
 
-    // 2. Select the correct AI provider based on the preferred model
-    const provider = routeToProvider(request);
-
-    // 3. Execute the AI generation request via the provider interface
-    const rawResponse = await provider.generateResponse({
+    // 3. Determine the model to use (allow request to override agent default)
+    const modelToUse = request.preferredModel || agentConfig.preferredModel || "gpt-4o";
+    const requestWithModel: IAIRequest = {
         ...request,
-        messages: [{ role: "user", content: finalPromptString }] // Send the structured prompt string
-    });
+        preferredModel: modelToUse,
+        temperature: request.temperature ?? agentConfig.temperature ?? 0.7,
+        messages: [{ role: "user", content: finalPromptString }] // Overwrite messages with the structured prompt
+    };
 
-    // 4. Format and normalize the response before sending it back
-    return formatResponse(rawResponse, request.preferredModel || "unknown");
+    // 4. Select the correct AI provider
+    const provider = routeToProvider(requestWithModel);
+
+    // 5. Execute the AI generation request via the provider interface
+    const rawResponse = await provider.generateResponse(requestWithModel);
+
+    // 6. Format and normalize the response before sending it back
+    return formatResponse(rawResponse, modelToUse);
 };

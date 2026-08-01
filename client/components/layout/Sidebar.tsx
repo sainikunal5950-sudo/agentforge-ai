@@ -1,146 +1,137 @@
 "use client";
 
-// ─────────────────────────────────────────────────────────────────────────────
-// components/layout/Sidebar.tsx
-// ─────────────────────────────────────────────────────────────────────────────
-// Fixed sidebar navigation for the developer testing dashboard.
-// Divided into two modules: Auth (7 endpoints) + User Management (5 endpoints).
-// Active route is highlighted with a violet glow indicator.
-// ─────────────────────────────────────────────────────────────────────────────
-
 import Link from "next/link";
-import { usePathname } from "next/navigation";
-import { FlaskIcon, ShieldIcon, UserIcon } from "@/components/ui/Icons";
-
-type HttpMethod = "GET" | "POST" | "PUT" | "DELETE";
-
-interface NavItem {
-    label: string;
-    path: string;
-    method: HttpMethod;
-}
-
-const AUTH_ROUTES: NavItem[] = [
-    { label: "Register",            path: "/auth/register",     method: "POST"   },
-    { label: "Verify Email",        path: "/auth/verify",       method: "POST"   },
-    { label: "Login",               path: "/auth/login",        method: "POST"   },
-    { label: "Current User",        path: "/auth/me",           method: "GET"    },
-    { label: "Refresh Token",       path: "/auth/refresh",      method: "POST"   },
-    { label: "Logout",              path: "/auth/logout",       method: "POST"   },
-    { label: "Unauthorized Test",   path: "/auth/unauthorized", method: "GET"    },
-];
-
-const USER_ROUTES: NavItem[] = [
-    { label: "Get / Update Profile", path: "/user/profile",  method: "GET"    },
-    { label: "Change Password",      path: "/user/password", method: "PUT"    },
-    { label: "Upload Avatar",        path: "/user/avatar",   method: "POST"   },
-    { label: "Delete Account",       path: "/user/account",  method: "DELETE" },
-    { label: "Settings",             path: "/user/settings", method: "GET"    },
-];
-
-const AGENT_ROUTES: NavItem[] = [
-    { label: "Agent Dashboard",      path: "/agents",        method: "GET"    },
-];
-
-const METHOD_COLORS: Record<HttpMethod, string> = {
-    GET:    "text-emerald-500",
-    POST:   "text-blue-500",
-    PUT:    "text-amber-500",
-    DELETE: "text-red-500",
-};
-
-function NavGroup({ title, icon, items }: { title: string; icon: React.ReactNode; items: NavItem[] }) {
-    const pathname = usePathname();
-
-    return (
-        <div className="mb-6">
-            <div className="flex items-center gap-2 px-3 mb-2">
-                <span className="text-white/30">{icon}</span>
-                <span className="text-[11px] font-semibold text-white/30 uppercase tracking-widest">
-                    {title}
-                </span>
-            </div>
-
-            <div className="space-y-0.5">
-                {items.map((item) => {
-                    const isActive = pathname === item.path;
-                    return (
-                        <Link
-                            key={item.path}
-                            href={item.path}
-                            className={`
-                                flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm
-                                transition-all duration-150 group relative
-                                ${isActive
-                                    ? "bg-violet-600/20 text-white border border-violet-500/30"
-                                    : "text-white/50 hover:text-white/80 hover:bg-white/5"
-                                }
-                            `}
-                        >
-                            {/* Active indicator bar */}
-                            {isActive && (
-                                <span className="absolute left-0 top-1/2 -translate-y-1/2 w-0.5 h-4 bg-violet-500 rounded-full" />
-                            )}
-
-                            {/* Method badge */}
-                            <span className={`text-[10px] font-mono font-bold w-12 flex-shrink-0 ${METHOD_COLORS[item.method]}`}>
-                                {item.method}
-                            </span>
-
-                            {/* Label */}
-                            <span className="truncate">{item.label}</span>
-                        </Link>
-                    );
-                })}
-            </div>
-        </div>
-    );
-}
+import { usePathname, useRouter } from "next/navigation";
+import { motion } from "framer-motion";
+import { cn } from "@/lib/utils";
+import api from "@/lib/axios";
+import { 
+    LayoutDashboard, 
+    Bot, 
+    PlusSquare, 
+    MessageSquare, 
+    Settings, 
+    History,
+    LogOut,
+    User,
+    Sparkles,
+    Search
+} from "lucide-react";
 
 export default function Sidebar() {
+    const pathname = usePathname();
+    const router = useRouter();
+
+    const handleLogout = async () => {
+        try {
+            await api.post("/api/auth/logout");
+        } catch (e) {
+            // ignore errors, still redirect
+        }
+        router.push("/auth/login");
+    };
+
+    const menuItems = [
+        { label: "Dashboard", href: "/dashboard", icon: LayoutDashboard },
+        { label: "AI Agents", href: "/agents", icon: Bot },
+        { label: "Create Agent", href: "/agents/create", icon: PlusSquare },
+        { label: "History", href: "/history", icon: History, placeholder: true },
+        { label: "Analytics", href: "/analytics", icon: Sparkles, placeholder: true },
+    ];
+
+    const bottomItems = [
+        { label: "Search", href: "#", icon: Search, action: true },
+        { label: "Settings", href: "/settings", icon: Settings, placeholder: true },
+        { label: "Profile", href: "/user/profile", icon: User },
+    ];
+
     return (
-        <aside className="fixed left-0 top-0 h-screen w-64 bg-[#0d0d14] border-r border-white/8 flex flex-col overflow-y-auto z-40">
-            {/* ── Logo / Brand ──────────────────────────────────────────────── */}
-            <div className="px-4 py-5 border-b border-white/8">
-                <Link href="/" className="flex items-center gap-3 group">
-                    <div className="w-9 h-9 rounded-xl bg-violet-600/20 border border-violet-500/30 flex items-center justify-center group-hover:bg-violet-600/30 transition-colors">
-                        <FlaskIcon />
+        <div className="w-64 flex-shrink-0 border-r border-[var(--border)] bg-[rgba(18,18,20,0.6)] backdrop-blur-xl h-screen sticky top-0 flex flex-col z-20 transition-all duration-300">
+            {/* Logo Area */}
+            <div className="h-16 flex items-center px-6 border-b border-[var(--border)]">
+                <Link href="/dashboard" className="flex items-center gap-2 group">
+                    <div className="w-8 h-8 rounded-lg bg-gradient-to-tr from-[var(--violet)] to-[var(--cyan)] flex items-center justify-center shadow-lg shadow-[var(--accent-glow)] group-hover:scale-105 transition-transform duration-300">
+                        <Sparkles className="w-4 h-4 text-white" />
                     </div>
-                    <div>
-                        <p className="text-sm font-bold text-white leading-tight">AgentForge</p>
-                        <p className="text-[10px] text-white/30">Dev Testing Dashboard</p>
-                    </div>
+                    <span className="font-bold text-lg tracking-tight bg-clip-text text-transparent bg-gradient-to-r from-white to-[var(--text-muted)]">
+                        AgentForge
+                    </span>
                 </Link>
             </div>
 
-            {/* ── Navigation ───────────────────────────────────────────────── */}
-            <nav className="flex-1 px-3 py-5">
-                <NavGroup
-                    title="Agent Module"
-                    icon={<span className="w-4 h-4 rounded-full border-2 border-current flex items-center justify-center"><span className="w-1.5 h-1.5 bg-current rounded-full" /></span>}
-                    items={AGENT_ROUTES}
-                />
-                <NavGroup
-                    title="Auth Module"
-                    icon={<ShieldIcon />}
-                    items={AUTH_ROUTES}
-                />
-                <NavGroup
-                    title="User Module"
-                    icon={<UserIcon />}
-                    items={USER_ROUTES}
-                />
+            {/* Main Navigation */}
+            <nav className="flex-1 overflow-y-auto py-6 px-4 space-y-1">
+                <div className="text-xs font-semibold text-[var(--text-faint)] uppercase tracking-wider mb-4 px-2">
+                    Platform
+                </div>
+                {menuItems.map((item) => {
+                    const isActive = pathname === item.href || (item.href !== "/dashboard" && pathname.startsWith(item.href));
+                    const Icon = item.icon;
+                    
+                    return (
+                        <Link 
+                            key={item.href} 
+                            href={item.href}
+                            className={cn(
+                                "flex items-center gap-3 px-3 py-2 rounded-xl text-sm font-medium transition-all duration-200 relative group",
+                                isActive ? "text-white" : "text-[var(--text-muted)] hover:text-white hover:bg-[rgba(255,255,255,0.03)]"
+                            )}
+                        >
+                            {isActive && (
+                                <motion.div 
+                                    layoutId="activeTab"
+                                    className="absolute inset-0 bg-[rgba(99,102,241,0.1)] border border-[rgba(99,102,241,0.2)] rounded-xl -z-10"
+                                    initial={false}
+                                    transition={{ type: "spring", stiffness: 400, damping: 30 }}
+                                />
+                            )}
+                            <Icon className={cn("w-4 h-4", isActive ? "text-[var(--accent)]" : "group-hover:text-[var(--text-primary)] transition-colors")} />
+                            {item.label}
+                            
+                            {item.placeholder && (
+                                <span className="ml-auto text-[9px] font-bold tracking-widest uppercase bg-[rgba(255,255,255,0.05)] px-1.5 py-0.5 rounded text-[var(--text-faint)]">
+                                    Soon
+                                </span>
+                            )}
+                        </Link>
+                    );
+                })}
             </nav>
 
-            {/* ── Footer ───────────────────────────────────────────────────── */}
-            <div className="px-4 py-4 border-t border-white/8">
-                <p className="text-[10px] text-white/20 font-mono">Backend: localhost:5000</p>
-                <p className="text-[10px] text-white/20 font-mono">Frontend: localhost:3000</p>
-                <div className="flex items-center gap-1.5 mt-2">
-                    <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
-                    <span className="text-[10px] text-emerald-400/70">Express + MongoDB</span>
-                </div>
+            {/* Bottom Actions */}
+            <div className="p-4 border-t border-[var(--border)] space-y-1">
+                {bottomItems.map((item) => {
+                    const Icon = item.icon;
+                    return (
+                        <Link 
+                            key={item.label} 
+                            href={item.href}
+                            onClick={item.action ? (e) => { e.preventDefault(); /* Global search trigger here */ } : undefined}
+                            className="flex items-center gap-3 px-3 py-2 rounded-xl text-sm font-medium text-[var(--text-muted)] hover:text-white hover:bg-[rgba(255,255,255,0.03)] transition-all duration-200 group"
+                        >
+                            <Icon className="w-4 h-4 group-hover:text-white transition-colors" />
+                            {item.label}
+                            {item.action && (
+                                <div className="ml-auto flex items-center gap-1">
+                                    <kbd className="hidden sm:inline-block px-1.5 py-0.5 text-[10px] bg-[rgba(255,255,255,0.05)] border border-[var(--border)] rounded text-[var(--text-faint)] font-mono">
+                                        Ctrl
+                                    </kbd>
+                                    <kbd className="hidden sm:inline-block px-1.5 py-0.5 text-[10px] bg-[rgba(255,255,255,0.05)] border border-[var(--border)] rounded text-[var(--text-faint)] font-mono">
+                                        K
+                                    </kbd>
+                                </div>
+                            )}
+                        </Link>
+                    );
+                })}
+                <button 
+                    onClick={handleLogout}
+                    className="w-full flex items-center gap-3 px-3 py-2 rounded-xl text-sm font-medium text-[var(--rose)] hover:bg-[rgba(244,63,94,0.1)] transition-all duration-200"
+                >
+                    <LogOut className="w-4 h-4" />
+                    Logout
+                </button>
             </div>
-        </aside>
+        </div>
     );
 }

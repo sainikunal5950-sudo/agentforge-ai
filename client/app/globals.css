@@ -5,14 +5,25 @@
 
 /* ── CSS Custom Properties (Design Tokens) ───────────────────────────────── */
 :root {
-    --bg-base:     #0a0a0f;
-    --bg-surface:  #0d0d14;
-    --bg-card:     #111118;
+    /* Pure Black & Dark Gray Theme */
+    --bg-base:     #000000;
+    --bg-surface:  #09090b;
+    --bg-card:     #121214;
+    --bg-hover:    #18181b;
+    
     --border:      rgba(255, 255, 255, 0.08);
-    --text-primary: #ffffff;
-    --text-muted:   rgba(255, 255, 255, 0.5);
-    --text-faint:   rgba(255, 255, 255, 0.25);
-    --violet:       #7c3aed;
+    --border-strong: rgba(255, 255, 255, 0.12);
+    
+    --text-primary: #f8fafc;
+    --text-muted:   #94a3b8;
+    --text-faint:   #475569;
+    
+    /* Electric Blue / Purple Accents */
+    --accent:       #6366f1; /* Indigo/Electric Blue */
+    --accent-hover: #4f46e5;
+    --accent-glow:  rgba(99, 102, 241, 0.15);
+    
+    --violet:       #8b5cf6;
     --cyan:         #06b6d4;
     --emerald:      #10b981;
     --amber:        #f59e0b;
@@ -56,7 +67,7 @@ code, pre, .font-mono {
 
 ::-webkit-scrollbar-thumb {
     background: rgba(255, 255, 255, 0.1);
-    border-radius: 3px;
+    border-radius: 9999px;
 }
 
 ::-webkit-scrollbar-thumb:hover {
@@ -65,54 +76,130 @@ code, pre, .font-mono {
 
 /* ── Selection Highlight ─────────────────────────────────────────────────── */
 ::selection {
-    background-color: rgba(124, 58, 237, 0.4);
+    background-color: rgba(99, 102, 241, 0.4);
     color: white;
 }
 
 /* ── Animated Gradient Background ──────────────────────────────────────────  */
 .gradient-bg {
-    background: radial-gradient(ellipse at top left, rgba(124, 58, 237, 0.08) 0%, transparent 50%),
-                radial-gradient(ellipse at bottom right, rgba(6, 182, 212, 0.05) 0%, transparent 50%);
+    background: radial-gradient(circle at top left, rgba(99, 102, 241, 0.05) 0%, transparent 40%),
+                radial-gradient(circle at bottom right, rgba(139, 92, 246, 0.05) 0%, transparent 40%);
+    background-attachment: fixed;
 }
 
-/* ── Glass Card ─────────────────────────────────────────────────────────── */
+/* ── Premium Glassmorphism Cards ─────────────────────────────────────────── */
+.glass-panel {
+    background: rgba(18, 18, 20, 0.6);
+    backdrop-filter: blur(16px);
+    -webkit-backdrop-filter: blur(16px);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+}
+
 .glass-card {
-    background: rgba(17, 17, 24, 0.7);
-    backdrop-filter: blur(12px);
-    border: 1px solid rgba(255, 255, 255, 0.08);
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.glass-card:hover {
+    border-color: var(--border-strong);
+    box-shadow: 0 8px 30px rgba(0, 0, 0, 0.4);
+    transform: translateY(-2px);
+}
+
+.glass-input {
+    background: rgba(0, 0, 0, 0.4);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    transition: all 0.2s ease;
+    color: var(--text-primary);
+}
+
+.glass-input:focus {
+    outline: none;
+    border-color: var(--accent);
+    box-shadow: 0 0 0 2px var(--accent-glow);
+}
+
+/* ── Premium Button ──────────────────────────────────────────────────────── */
+.btn-primary {
+    background: var(--accent);
+    color: white;
+    border: none;
+    border-radius: 8px;
+    padding: 0.5rem 1rem;
+    font-weight: 500;
+    transition: all 0.2s ease;
+    box-shadow: 0 4px 14px 0 var(--accent-glow);
+}
+
+.btn-primary:hover {
+    background: var(--accent-hover);
+    transform: translateY(-1px);
+    box-shadow: 0 6px 20px rgba(99, 102, 241, 0.23);
+}
+
+.btn-secondary {
+    background: rgba(255, 255, 255, 0.05);
+    color: var(--text-primary);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 0.5rem 1rem;
+    font-weight: 500;
+    transition: all 0.2s ease;
+}
+
+.btn-secondary:hover {
+    background: rgba(255, 255, 255, 0.1);
+    border-color: var(--border-strong);
 }
 
 /* ── Glow Effects ────────────────────────────────────────────────────────── */
-.glow-violet {
-    box-shadow: 0 0 20px rgba(124, 58, 237, 0.15);
+.glow-accent {
+    box-shadow: 0 0 20px var(--accent-glow);
 }
 
-.glow-cyan {
-    box-shadow: 0 0 20px rgba(6, 182, 212, 0.10);
+/* ── Status Badges ───────────────────────────────────────────────────────── */
+.badge {
+    display: inline-flex;
+    align-items: center;
+    padding: 0.125rem 0.5rem;
+    border-radius: 9999px;
+    font-size: 0.75rem;
+    font-weight: 500;
+    border: 1px solid var(--border);
+    background: rgba(255, 255, 255, 0.03);
+    color: var(--text-muted);
+}
+.badge-emerald { background: rgba(16, 185, 129, 0.1); color: #10b981; border-color: rgba(16, 185, 129, 0.2); }
+.badge-violet { background: rgba(139, 92, 246, 0.1); color: #8b5cf6; border-color: rgba(139, 92, 246, 0.2); }
+.badge-cyan { background: rgba(6, 182, 212, 0.1); color: #06b6d4; border-color: rgba(6, 182, 212, 0.2); }
+.badge-amber { background: rgba(245, 158, 11, 0.1); color: #f59e0b; border-color: rgba(245, 158, 11, 0.2); }
+
+/* ── Markdown Overrides ─────────────────────────────────────────────────── */
+.prose pre {
+    background: var(--bg-base) !important;
+    border: 1px solid var(--border);
+    border-radius: 8px;
+}
+.prose code {
+    background: rgba(255, 255, 255, 0.1);
+    padding: 0.125rem 0.25rem;
+    border-radius: 4px;
+    font-size: 0.875em;
+}
+.prose pre code {
+    background: transparent;
+    padding: 0;
 }
 
 /* ── Page Transition ─────────────────────────────────────────────────────── */
-@keyframes fadeSlideIn {
-    from {
-        opacity: 0;
-        transform: translateY(8px);
-    }
-    to {
-        opacity: 1;
-        transform: translateY(0);
-    }
+@keyframes pageEnter {
+    from { opacity: 0; transform: translateY(10px); }
+    to   { opacity: 1; transform: translateY(0); }
 }
-
 .page-enter {
-    animation: fadeSlideIn 0.25s ease-out forwards;
-}
-
-/* ── Flow Arrow (Theory Box) ─────────────────────────────────────────────── */
-.flow-arrow::after {
-    content: "↓";
-    display: block;
-    text-align: center;
-    color: rgba(124, 58, 237, 0.5);
-    font-size: 12px;
-    margin: 2px 0;
+    animation: pageEnter 0.3s ease forwards;
 }

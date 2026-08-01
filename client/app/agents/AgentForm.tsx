@@ -88,36 +88,41 @@ export default function AgentForm({ initialData, onSuccess, onCancel }: AgentFor
 
     return (
         <form onSubmit={handleSubmit} className="mb-8">
-            <div className="flex items-center justify-between mb-6">
-                <h2 className="text-xl font-bold text-white">
-                    {isEdit ? "Edit AI Employee" : "Onboard New AI Employee"}
-                </h2>
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between mb-8 gap-4">
+                <div>
+                    <h2 className="text-2xl font-bold tracking-tight text-white mb-1">
+                        {isEdit ? "Agent Configuration" : "Deploy AI Agent"}
+                    </h2>
+                    <p className="text-[var(--text-muted)] text-sm">
+                        {isEdit ? "Modify behavior, capabilities, and system parameters." : "Define identity, behavior, and capabilities for your new agent."}
+                    </p>
+                </div>
                 <div className="flex items-center gap-3">
                     {isEdit && onCancel && (
                         <button
                             type="button"
                             onClick={onCancel}
                             disabled={isSubmitting}
-                            className="bg-white/5 hover:bg-white/10 text-white px-5 py-2.5 rounded-lg text-sm font-medium transition-colors disabled:opacity-50"
+                            className="btn-secondary"
                         >
-                            Cancel
+                            Discard
                         </button>
                     )}
                     <button
                         type="submit"
                         disabled={isSubmitting}
-                        className="bg-violet-600 hover:bg-violet-500 text-white px-6 py-2.5 rounded-lg text-sm font-medium transition-colors disabled:opacity-50 flex items-center justify-center min-w-[140px] shadow-[0_0_15px_rgba(124,58,237,0.3)] hover:shadow-[0_0_25px_rgba(124,58,237,0.5)]"
+                        className="btn-primary min-w-[140px] flex items-center justify-center gap-2"
                     >
                         {isSubmitting ? (
-                            <span className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin"></span>
+                            <span className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin"></span>
                         ) : (
-                            isEdit ? "Save Changes" : "Deploy Agent"
+                            isEdit ? "Save Changes" : "Initialize Agent"
                         )}
                     </button>
                 </div>
             </div>
 
-            <Card className="mb-6">
+            <Card className="mb-6 border-none shadow-none bg-transparent">
                 <CardSection 
                     title="Basic Information" 
                     description="The foundational details that identify this agent across your workspace."
@@ -182,7 +187,7 @@ export default function AgentForm({ initialData, onSuccess, onCancel }: AgentFor
                         value={systemPrompt}
                         onChange={(e) => setSystemPrompt(e.target.value)}
                         disabled={isSubmitting}
-                        className="min-h-[150px] font-mono text-xs"
+                        className="min-h-[200px] font-mono text-[13px] bg-[rgba(0,0,0,0.5)] border-[var(--border)] leading-relaxed"
                     />
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mt-4">
                         <SelectField

@@ -1,130 +1,92 @@
 "use client";
 
-// ─────────────────────────────────────────────────────────────────────────────
-// app/user/profile/page.tsx — GET + PUT /api/user/profile
-// ─────────────────────────────────────────────────────────────────────────────
-// Two panels in one page: fetch the profile and update it.
-// GET returns the full profile (name, email, bio, phone, avatar, settings).
-// PUT accepts partial updates (name, bio, phone only — email/password excluded).
-// Both require requireAuth middleware to run first.
-// ─────────────────────────────────────────────────────────────────────────────
-
-import { useState } from "react";
-import ApiCard from "@/components/ui/ApiCard";
-import FormField from "@/components/ui/FormField";
-import ActionButton from "@/components/ui/ActionButton";
-import TheoryBox from "@/components/theory/TheoryBox";
-import { useApiCall } from "@/hooks/useApiCall";
+import { useEffect, useState } from "react";
+import { User, Mail, Calendar, Shield, Edit3 } from "lucide-react";
 import api from "@/lib/axios";
-import { UpdateProfileInput } from "@/lib/types";
 
 export default function ProfilePage() {
-    const getState = useApiCall();
-    const updateState = useApiCall();
+    const [user, setUser] = useState<any>(null);
 
-    const [form, setForm] = useState<UpdateProfileInput>({ name: "", bio: "", phone: "" });
-
-    const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-        setForm((prev) => ({ ...prev, [e.target.name]: e.target.value }));
-    };
-
-    const handleGet = async () => {
-        await getState.execute(() => api.get("/api/user/profile"));
-    };
-
-    const handleUpdate = async () => {
-        const payload: UpdateProfileInput = {};
-        if (form.name) payload.name = form.name;
-        if (form.bio) payload.bio = form.bio;
-        if (form.phone) payload.phone = form.phone;
-        await updateState.execute(() => api.put("/api/user/profile", payload));
-    };
+    useEffect(() => {
+        // Fetch current user details from existing backend
+        api.get("/api/auth/me").then(res => setUser(res.data.data)).catch(console.error);
+    }, []);
 
     return (
         <div className="space-y-6">
-            {/* ── GET Profile ──────────────────────────────────────────────── */}
-            <ApiCard
-                method="GET"
-                endpoint="/api/user/profile"
-                description="Fetches the complete user profile. Identity comes from req.user (injected by requireAuth) — no request body needed. Returns name, email, bio, phone, avatar, settings, createdAt."
-                requiresAuth={true}
-                state={getState.state}
-            >
-                <ActionButton
-                    label="GET /api/user/profile"
-                    loadingLabel="Fetching profile..."
-                    loading={getState.state.loading}
-                    onClick={handleGet}
-                />
-            </ApiCard>
-
-            {/* ── PUT Profile ──────────────────────────────────────────────── */}
-            <ApiCard
-                method="PUT"
-                endpoint="/api/user/profile"
-                description="Partially updates the user's profile. Only name, bio, and phone can be changed here. Email has a dedicated route (not yet implemented). Password has its own PUT /password route."
-                requiresAuth={true}
-                state={updateState.state}
-                requestBody={updateState.state.data ? Object.fromEntries(
-                    Object.entries(form).filter(([, v]) => v !== "")
-                ) : undefined}
-            >
-                <div className="space-y-4">
-                    <FormField
-                        label="Name"
-                        name="name"
-                        type="text"
-                        placeholder="Updated name (optional)"
-                        value={form.name}
-                        onChange={handleChange}
-                    />
-                    <FormField
-                        label="Bio"
-                        name="bio"
-                        type="text"
-                        placeholder="Short bio (optional)"
-                        value={form.bio}
-                        onChange={handleChange}
-                        hint="Stored as-is. Frontend truncates display length."
-                    />
-                    <FormField
-                        label="Phone"
-                        name="phone"
-                        type="text"
-                        placeholder="+91 98765 43210 (optional)"
-                        value={form.phone}
-                        onChange={handleChange}
-                    />
-                    <ActionButton
-                        label="PUT /api/user/profile"
-                        loadingLabel="Updating profile..."
-                        loading={updateState.state.loading}
-                        onClick={handleUpdate}
-                        disabled={!form.name && !form.bio && !form.phone}
-                    />
+            <div className="flex justify-between items-end mb-8">
+                <div>
+                    <h1 className="text-3xl font-bold tracking-tight text-white mb-1">User Profile</h1>
+                    <p className="text-[var(--text-muted)] text-sm">Manage your personal information and security settings.</p>
                 </div>
-            </ApiCard>
+                <button className="btn-secondary flex items-center gap-2">
+                    <Edit3 className="w-4 h-4" /> Edit Profile
+                </button>
+            </div>
 
-            <TheoryBox
-                title="Profile Architecture — Partial Updates"
-                explanation="GET /profile does NOT re-authenticate. requireAuth already ran and attached req.user to the request. The getUserProfile controller reads req.user._id and calls getUserProfileService(userId) which does User.findById(userId).select('-password -refreshToken'). This is a second DB query — but it returns the full profile including bio, phone, avatar, settings that are not in the JWT payload. PUT /profile uses MongoDB's $set operator internally so unspecified fields are not overwritten — this is partial update design. The controller validates that at least one of (name, bio, phone) is provided before calling the service."
-                flowSteps={[
-                    { label: "GET Request → requireAuth", detail: "Verifies cookie, attaches req.user" },
-                    { label: "getUserProfile controller", detail: "const userId = req.user._id.toString()" },
-                    { label: "getUserProfileService(userId)", detail: "User.findById(userId).select('-password -refreshToken')" },
-                    { label: "MongoDB returns full user document", detail: "Including bio, phone, avatar, settings, createdAt" },
-                    { label: "HTTP 200 → React state update", detail: "Profile data rendered in ResponseViewer" },
-                    { label: "PUT Request → partial body", detail: "Only changed fields sent — undefined fields not overwritten" },
-                    { label: "updateUserProfileService(userId, { name, bio, phone })", detail: "MongoDB: User.findByIdAndUpdate($set: { name, bio, phone })" },
-                    { label: "Returns updated user document", detail: "Controller sends HTTP 200 with updated data" },
-                ]}
-                securityNotes={[
-                    "Email change is intentionally excluded — requires separate verification flow",
-                    "Password change is intentionally excluded — requires current password verification",
-                    "userId comes from req.user._id (JWT) — users cannot update someone else's profile",
-                    "Partial updates prevent overwriting fields the user didn't intend to change",
-                ]}
-            />
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                {/* Profile Card */}
+                <div className="glass-panel p-8 md:col-span-1 flex flex-col items-center text-center">
+                    <div className="w-24 h-24 rounded-full bg-gradient-to-tr from-[var(--violet)] to-[var(--cyan)] flex items-center justify-center shadow-lg shadow-[var(--accent-glow)] mb-6 border-4 border-[rgba(255,255,255,0.05)]">
+                        <span className="text-3xl font-bold text-white">
+                            {user?.name ? user.name.charAt(0).toUpperCase() : "U"}
+                        </span>
+                    </div>
+                    <h2 className="text-xl font-bold text-white mb-1">{user?.name || "Loading..."}</h2>
+                    <p className="text-[var(--text-muted)] text-sm mb-4">{user?.email || "..."}</p>
+                    
+                    <div className="w-full h-px bg-[var(--border)] my-4" />
+                    
+                    <div className="w-full flex items-center justify-between text-sm">
+                        <span className="text-[var(--text-muted)]">Role</span>
+                        <span className="badge badge-violet">Developer</span>
+                    </div>
+                </div>
+
+                {/* Details Section */}
+                <div className="glass-card p-8 md:col-span-2 space-y-8">
+                    <div>
+                        <h3 className="text-lg font-semibold text-white mb-4 flex items-center gap-2">
+                            <User className="w-5 h-5 text-[var(--accent)]" /> 
+                            Personal Information
+                        </h3>
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                            <div className="p-3 rounded-xl bg-[rgba(255,255,255,0.02)] border border-[var(--border)]">
+                                <span className="text-xs text-[var(--text-faint)] block mb-1">Full Name</span>
+                                <span className="text-sm font-medium text-white">{user?.name || "-"}</span>
+                            </div>
+                            <div className="p-3 rounded-xl bg-[rgba(255,255,255,0.02)] border border-[var(--border)]">
+                                <span className="text-xs text-[var(--text-faint)] block mb-1">Email Address</span>
+                                <span className="text-sm font-medium text-white">{user?.email || "-"}</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div className="w-full h-px bg-[var(--border)]" />
+
+                    <div>
+                        <h3 className="text-lg font-semibold text-white mb-4 flex items-center gap-2">
+                            <Shield className="w-5 h-5 text-[var(--accent)]" /> 
+                            Security & Access
+                        </h3>
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                            <div className="p-3 rounded-xl bg-[rgba(255,255,255,0.02)] border border-[var(--border)] flex justify-between items-center">
+                                <div>
+                                    <span className="text-xs text-[var(--text-faint)] block mb-1">Password</span>
+                                    <span className="text-sm font-medium text-white">••••••••</span>
+                                </div>
+                                <button className="text-xs text-[var(--accent)] hover:text-white transition-colors">Change</button>
+                            </div>
+                            <div className="p-3 rounded-xl bg-[rgba(255,255,255,0.02)] border border-[var(--border)]">
+                                <span className="text-xs text-[var(--text-faint)] block mb-1">Account Created</span>
+                                <span className="text-sm font-medium text-white">
+                                    {user?.createdAt ? new Date(user.createdAt).toLocaleDateString() : "-"}
+                                </span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
         </div>
     );
 }

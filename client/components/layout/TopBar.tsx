@@ -1,55 +1,56 @@
 "use client";
 
-// ─────────────────────────────────────────────────────────────────────────────
-// components/layout/TopBar.tsx
-// ─────────────────────────────────────────────────────────────────────────────
-// Fixed top bar that shows the current page title and cookie/auth status.
-// ─────────────────────────────────────────────────────────────────────────────
-
 import { usePathname } from "next/navigation";
-
-const PAGE_TITLES: Record<string, { title: string; subtitle: string }> = {
-    "/":                    { title: "Dashboard Overview",      subtitle: "All 13 backend endpoints at a glance" },
-    "/auth/register":       { title: "Register",                subtitle: "POST /api/auth/register" },
-    "/auth/verify":         { title: "Verify Email",            subtitle: "POST /api/auth/verify-code" },
-    "/auth/login":          { title: "Login",                   subtitle: "POST /api/auth/login" },
-    "/auth/me":             { title: "Current User",            subtitle: "GET /api/auth/me — requires accessToken cookie" },
-    "/auth/refresh":        { title: "Refresh Token",           subtitle: "POST /api/auth/refresh — uses refreshToken cookie" },
-    "/auth/logout":         { title: "Logout",                  subtitle: "POST /api/auth/logout — clears cookies" },
-    "/auth/unauthorized":   { title: "Unauthorized Test",       subtitle: "GET /api/auth/me — expects 401" },
-    "/user/profile":        { title: "User Profile",            subtitle: "GET + PUT /api/user/profile" },
-    "/user/password":       { title: "Change Password",         subtitle: "PUT /api/user/password" },
-    "/user/avatar":         { title: "Upload Avatar",           subtitle: "POST /api/user/avatar (multipart/form-data)" },
-    "/user/account":        { title: "Delete Account",          subtitle: "DELETE /api/user/account" },
-    "/user/settings":       { title: "User Settings",           subtitle: "GET + PUT /api/user/settings" },
-};
+import { Bell, ChevronRight } from "lucide-react";
+import CommandPalette from "./CommandPalette";
 
 export default function TopBar() {
     const pathname = usePathname();
-    const page = PAGE_TITLES[pathname] ?? { title: "AgentForge", subtitle: "Developer Testing Dashboard" };
+
+    // Simple breadcrumb generator
+    const generateBreadcrumbs = () => {
+        const paths = pathname.split("/").filter(Boolean);
+        if (paths.length === 0) return [{ name: "Dashboard", current: true }];
+        
+        return paths.map((path, index) => {
+            const isLast = index === paths.length - 1;
+            const name = path.charAt(0).toUpperCase() + path.slice(1);
+            return {
+                name: path === "agents" ? "AI Agents" : name.length > 24 ? name.substring(0, 10) + "..." : name,
+                current: isLast
+            };
+        });
+    };
+
+    const breadcrumbs = generateBreadcrumbs();
 
     return (
-        <header className="fixed top-0 left-64 right-0 h-16 bg-[#0d0d14]/80 backdrop-blur-sm border-b border-white/8 z-30 flex items-center justify-between px-8">
-            {/* Page Title */}
-            <div>
-                <h1 className="text-base font-semibold text-white leading-tight">
-                    {page.title}
-                </h1>
-                <p className="text-xs text-white/35 font-mono mt-0.5">{page.subtitle}</p>
+        <header className="h-16 flex-shrink-0 flex items-center justify-between px-6 lg:px-8 border-b border-[var(--border)] bg-[rgba(18,18,20,0.6)] backdrop-blur-xl sticky top-0 z-10">
+            {/* Breadcrumbs */}
+            <div className="flex items-center gap-2">
+                {breadcrumbs.map((item, index) => (
+                    <div key={index} className="flex items-center gap-2">
+                        {index > 0 && <ChevronRight className="w-4 h-4 text-[var(--text-faint)]" />}
+                        <span className={`text-sm font-medium ${item.current ? "text-[var(--text-primary)]" : "text-[var(--text-muted)]"}`}>
+                            {item.name}
+                        </span>
+                    </div>
+                ))}
             </div>
 
-            {/* Right Side Indicators */}
+            {/* Right Actions */}
             <div className="flex items-center gap-4">
-                {/* Cookie Info Badge */}
-                <div className="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-white/5 border border-white/10">
-                    <span className="text-xs text-white/40">🍪</span>
-                    <span className="text-[11px] text-white/40 font-mono">HTTP-Only Cookies</span>
-                    <span className="w-1.5 h-1.5 rounded-full bg-violet-500 animate-pulse" />
-                </div>
-
-                {/* Axios Badge */}
-                <div className="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-white/5 border border-white/10">
-                    <span className="text-[11px] text-white/40 font-mono">withCredentials: true</span>
+                <CommandPalette />
+                
+                <div className="w-px h-5 bg-[var(--border)] hidden sm:block" />
+                
+                <button className="relative text-[var(--text-muted)] hover:text-white transition-colors">
+                    <Bell className="w-5 h-5" />
+                    <span className="absolute top-0 right-0 w-2 h-2 bg-[var(--accent)] rounded-full border border-[var(--bg-base)]" />
+                </button>
+                
+                <div className="w-8 h-8 rounded-full bg-gradient-to-tr from-[var(--accent)] to-[var(--violet)] flex items-center justify-center border border-[var(--border)] cursor-pointer hover:shadow-lg hover:shadow-[var(--accent-glow)] transition-all">
+                    <span className="text-white text-xs font-bold">JD</span>
                 </div>
             </div>
         </header>

@@ -4,14 +4,15 @@ import { IAIResponse } from "../types/ai.types.js";
  * Normalizes raw responses from different AI providers into our unified IAIResponse format.
  */
 export const formatResponse = (rawResponse: any, modelUsed: string): IAIResponse => {
-    // Placeholder logic
+    // If it's already an IAIResponse (like from OpenAIProvider), just return it
+    if (rawResponse && typeof rawResponse.content === "string") {
+        return rawResponse as IAIResponse;
+    }
+
+    // Fallback for providers that haven't normalized their responses yet
     return {
-        content: "Placeholder content",
+        content: rawResponse?.content || "No response received",
         modelUsed: modelUsed,
-        usage: {
-            promptTokens: 0,
-            completionTokens: 0,
-            totalTokens: 0
-        }
+        usage: rawResponse?.usage
     };
 };

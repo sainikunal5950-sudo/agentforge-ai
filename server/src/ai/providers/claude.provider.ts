@@ -6,6 +6,8 @@ export class ClaudeProvider implements IAIProvider {
 
     async generateResponse(request: IAIRequest): Promise<IAIResponse> {
         // Placeholder for future Anthropic SDK implementation
-        throw new Error("ClaudeProvider not implemented yet.");
+        const error = new Error("ClaudeProvider not implemented yet.") as any;
+        error.statusCode = 501;
+        throw error;
     }
 }

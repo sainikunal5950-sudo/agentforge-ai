@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useState } from "react";
+import Link from "next/link";
 import { Agent } from "@/lib/types";
 import api from "@/lib/axios";
 import { useToast } from "@/contexts/ToastContext";
@@ -71,6 +72,15 @@ export default function AgentCard({ agent, onEdit, onDeleteSuccess }: AgentCardP
                 </div>
                 
                 <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                    <Link
+                        href={`/agents/${agent.id}/chat`}
+                        className="p-1.5 bg-indigo-500/10 hover:bg-indigo-500/20 rounded-lg text-indigo-400 hover:text-indigo-300 transition-colors"
+                        title="Chat with Agent"
+                    >
+                        <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
+                        </svg>
+                    </Link>
                     <button
                         onClick={() => onEdit(agent)}
                         disabled={isDeleting}

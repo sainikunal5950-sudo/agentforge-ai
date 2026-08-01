@@ -146,3 +146,12 @@ export interface UpdateAgentInput extends BaseAgentConfig {
     name?: string;
     description?: string;
 }
+
+// ── Chat Data Shapes ─────────────────────────────────────────────────────────
+
+export interface ChatMessage {
+    id: string;
+    role: "user" | "assistant";
+    content: string;
+    createdAt: Date;
+}

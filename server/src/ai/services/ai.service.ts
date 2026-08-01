@@ -19,7 +19,7 @@ export const processAIRequestService = async (userId: string, request: IAIReques
     const finalPromptString = buildPrompt(agentConfig, userMessage);
 
     // 3. Determine the model to use (allow request to override agent default)
-    const modelToUse = request.preferredModel || agentConfig.preferredModel || "gpt-4o";
+    const modelToUse = request.preferredModel || agentConfig.preferredModel || "llama-3.3-70b-versatile";
     const requestWithModel: IAIRequest = {
         ...request,
         preferredModel: modelToUse,
@@ -29,10 +29,24 @@ export const processAIRequestService = async (userId: string, request: IAIReques
 
     // 4. Select the correct AI provider
     const provider = routeToProvider(requestWithModel);
+    
+    console.info(`[AI Execution] Initiating request for Agent: ${request.agentId} | Model: ${modelToUse} | Provider: ${provider.name}`);
+    const startTime = Date.now();
 
-    // 5. Execute the AI generation request via the provider interface
-    const rawResponse = await provider.generateResponse(requestWithModel);
+    try {
+        // 5. Execute the AI generation request via the provider interface
+        const rawResponse = await provider.generateResponse(requestWithModel);
+        
+        const executionTime = Date.now() - startTime;
+        console.info(`[AI Execution] Success | Agent: ${request.agentId} | Time: ${executionTime}ms`);
 
-    // 6. Format and normalize the response before sending it back
-    return formatResponse(rawResponse, modelToUse);
+        // 6. Format and normalize the response before sending it back
+        // In the new architecture, the provider directly returns IAIResponse,
+        // so response-formatter is not strictly needed for OpenAI, but we can pass it through for consistency.
+        return formatResponse(rawResponse, modelToUse);
+    } catch (error: any) {
+        const executionTime = Date.now() - startTime;
+        console.error(`[AI Execution] Failed | Agent: ${request.agentId} | Time: ${executionTime}ms | Error: ${error.message}`);
+        throw error;
+    }
 };

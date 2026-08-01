@@ -1,6 +1,6 @@
 import { IAIRequest, IAIResponse } from "../types/ai.types.js";
 
-export type AIProviderName = "OpenAI" | "Gemini" | "Claude" | "Local";
+export type AIProviderName = "OpenAI" | "Gemini" | "Claude" | "Local" | "Groq";
 
 export interface IAIProvider {
     /**

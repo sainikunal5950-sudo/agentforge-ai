@@ -30,7 +30,13 @@ export const executeAIRequest = async (req: IAuthenticatedRequest, res: Response
         // Delegate to the AI execution service
         const response = await processAIRequestService(userId, request);
 
-        res.status(200).json({ success: true, data: response });
+        res.status(200).json({ 
+            success: true, 
+            message: response.content,
+            model: response.modelUsed,
+            agentId: agentId,
+            timestamp: new Date().toISOString()
+        });
     } catch (error: any) {
         handleErrorResponse(res, error, "Internal server error during AI execution");
     }

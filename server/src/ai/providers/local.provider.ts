@@ -6,6 +6,8 @@ export class LocalProvider implements IAIProvider {
 
     async generateResponse(request: IAIRequest): Promise<IAIResponse> {
         // Placeholder for future local LLM (e.g. Ollama, LMStudio) implementation
-        throw new Error("LocalProvider not implemented yet.");
+        const error = new Error("LocalProvider not implemented yet.") as any;
+        error.statusCode = 501;
+        throw error;
     }
 }
